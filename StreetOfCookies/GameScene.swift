@@ -12,17 +12,17 @@ import SpriteKit
 class GameScene: SKScene {
     var level: Level!
     
-    let tileWidth: CGFloat = 32
-    let tileHeight: CGFloat = 36
+    let tileWidth: CGFloat = 32 * 1.8
+    let tileHeight: CGFloat = 36 * 1.8
     
     let gameLayer = SKNode()
     let cookiesLayer = SKNode()
     let tilesLayer = SKNode()
 
-    private var swipeFromCol: Int?
-    private var swipeFromRow: Int?
-
-    private var swipeFrom: CGPoint?
+    private var swipeFromX: Int?
+    private var swipeFromY: Int?
+    private var oriX = -1
+    private var oriY = -1
 
     var selectionSprite = SKSpriteNode()
 
@@ -35,9 +35,8 @@ class GameScene: SKScene {
     override init(size: CGSize) {
         super.init(size: size)
 
-        swipeFromCol = nil
-        swipeFromRow = nil
-        swipeFrom = nil
+        swipeFromX = nil
+        swipeFromY = nil
 
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
         
@@ -47,7 +46,7 @@ class GameScene: SKScene {
         
         addChild(gameLayer)
         
-        let layerPosition = CGPoint(x: -tileWidth * CGFloat(maxCol) / 2, y: -tileHeight * CGFloat(maxRow) / 2)
+        let layerPosition = CGPoint(x: -tileWidth * CGFloat(maxX) / 2, y: -tileHeight * CGFloat(maxY) / 2)
             
         tilesLayer.position = layerPosition
         gameLayer.addChild(tilesLayer)
@@ -55,10 +54,10 @@ class GameScene: SKScene {
         cookiesLayer.position = layerPosition
         gameLayer.addChild(cookiesLayer)
 
-        //view -+- background             +- tileNode(col*row)
+        //view -+- background             +- tileNode(x*y)
         //      +- gameLayer -+- tilesLayer
         //                   -+- cookiesLayer
-        //                                  +- cookieNode(col*row)
+        //                                  +- cookieNode(x*y)
     }
     
     override func didMove(to view: SKView) {
@@ -68,63 +67,86 @@ class GameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: cookiesLayer)
-        let (success, col, row) = convertPoint(location)
+        let (success, x, y) = convertPoint(location)
         if success {
-            if let cookie = level.cookieAt(col: col, row: row) {
+            if let cookie = level.cookieAt(x: x, y: y) {
                 showSelectionIndicator(for: cookie)
-                swipeFromCol = col
-                swipeFromRow = row
-                swipeFrom = location
+                swipeFromX = x
+                swipeFromY = y
+                oriX = x
+                oriY = y
             }
         }
-        print("Begin (\(swipeFromRow ?? -1), \(swipeFromCol ?? -1))")
+        print("Begin (\(swipeFromX ?? -1), \(swipeFromY ?? -1))")
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard swipeFromCol != nil else { return }
+        guard swipeFromX != nil && swipeFromY != nil else { return }
         guard let touch = touches.first else { return }
         let location = touch.location(in: cookiesLayer)
-        let (temp, oriCol, oriRow) = convertPoint(swipeFrom!)
-        if temp {
-            let (success, col, row) = convertPoint(location)
-            if success && !(swipeFromCol == col && swipeFromRow == row) {
-                var horzDelta = 0
-                var vertDelta = 0
-                if location.x - (swipeFrom?.x)! > tileWidth * 0.5 || (swipeFrom?.x)! - location.x > tileWidth * 0.5 {
-                    horzDelta = col - swipeFromCol!
-                    print("X moved")
-                }
-                if location.y - (swipeFrom?.y)! > tileHeight * 0.5 || (swipeFrom?.y)! - location.y  > tileHeight * 0.5 {
-                    vertDelta = row - swipeFromRow!
-                    print("Y moved")
-                }
-                if horzDelta != 0 || vertDelta != 0 {
-                    print("Move (\(row), \(col))")
-                    trySwap(horizontal: horzDelta, vertical: vertDelta)
-                    if horzDelta == 0 {
-                        swipeFromCol = oriCol
-                    } else {
-                        swipeFromCol = col
-                    }
-                    if vertDelta == 0 {
-                        swipeFromRow = oriRow
-                    } else {
-                        swipeFromRow = row
-                    }
-                    swipeFrom = location
-                }
+        let (success, x, y) = convertPoint(location)
+        if success {
+            var horzDelta = 0
+            var vertDelta = 0
+            
+            if location.x > CGFloat(oriX) * tileWidth + tileWidth * 1.1 && location.y > CGFloat(oriY) * tileHeight + tileHeight * 1.1 {
+                print("Get Up-Right")
+                horzDelta = 1
+                vertDelta = 1
+                oriX = x
+                oriY = y
+            } else if location.x < CGFloat(oriX) * tileWidth - tileWidth * 0.1 && location.y > CGFloat(oriY) * tileHeight + tileHeight * 1.1 {
+                print("Get Up-Left")
+                horzDelta = -1
+                vertDelta = 1
+                oriX = x
+                oriY = y
+            } else if location.x > CGFloat(oriX) * tileWidth + tileWidth * 1.1 && location.y < CGFloat(oriY) * tileHeight - tileHeight * 0.1 {
+                print("Get Down-Right")
+                horzDelta = 1
+                vertDelta = -1
+                oriX = x
+                oriY = y
+            } else if location.x < CGFloat(oriX) * tileWidth - tileWidth * 0.1 && location.y < CGFloat(oriY) * tileHeight - tileHeight * 0.1 {
+                print("Get Down-Left")
+                horzDelta = -1
+                vertDelta = -1
+                oriX = x
+                oriY = y
+            } else if location.x > CGFloat(oriX) * tileWidth + tileWidth * 1.2 {
+                print("Get Right")
+                horzDelta = 1
+                oriX = x
+            } else if location.x < CGFloat(oriX) * tileWidth - tileWidth * 0.2 {
+                print("Get Left")
+                horzDelta = -1
+                oriX = x
+            } else if location.y > CGFloat(oriY) * tileHeight + tileHeight * 1.2 {
+                print("Get Up")
+                vertDelta = 1
+                oriY = y
+            } else if location.y < CGFloat(oriY) * tileHeight - tileHeight * 0.2 {
+                print("Get Down")
+                vertDelta = -1
+                oriY = y
+            }
+
+            if horzDelta != 0 || vertDelta != 0 {
+                print("Move (\(x), \(y))")
+                trySwap(horizontal: horzDelta, vertical: vertDelta)
+                swipeFromX = oriX
+                swipeFromY = oriY
             }
         }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if selectionSprite.parent != nil && swipeFromCol != nil {
+        if selectionSprite.parent != nil && swipeFromX != nil  && swipeFromY != nil {
             hideSelectionIndicator()
         }
-        swipeFromCol = nil
-        swipeFromRow = nil
-        swipeFrom = nil
-        print("End (\(swipeFromRow ?? -1), \(swipeFromCol ?? -1))")
+        swipeFromX = nil
+        swipeFromY = nil
+        print("End (\(swipeFromX ?? -1), \(swipeFromY ?? -1))")
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -136,12 +158,12 @@ class GameScene: SKScene {
     }
 
     func addTiles() {
-        for row in 0..<maxRow {
-            for col in 0..<maxCol{
-                if level.tileAt(col: col, row: row) != nil {
+        for y in 0..<maxY {
+            for x in 0..<maxX{
+                if level.tileAt(x: x, y: y) != nil {
                     let tileNode = SKSpriteNode(imageNamed: "Tile")
                     tileNode.size = CGSize(width: tileWidth, height: tileHeight)
-                    tileNode.position = pointFor(col: col, row: row)
+                    tileNode.position = pointFor(x: x, y: y)
                     tilesLayer.addChild(tileNode)
                 }
             }
@@ -152,31 +174,30 @@ class GameScene: SKScene {
         for cookie in cookies {
             let sprite = SKSpriteNode(imageNamed: cookie.cookieType.cookieName)
             sprite.size = CGSize(width: tileWidth, height: tileHeight)
-            sprite.position = pointFor(col: cookie.col, row: cookie.row)
+            sprite.position = pointFor(x: cookie.x, y: cookie.y)
             cookiesLayer.addChild(sprite)
             cookie.sprite = sprite
         }
     }
 
-    func pointFor(col: Int, row: Int) -> CGPoint {
-        return CGPoint(x: CGFloat(col) * tileWidth + tileWidth / 2, y: CGFloat(row) * tileHeight + tileHeight / 2)
+    func pointFor(x: Int, y: Int) -> CGPoint {
+        return CGPoint(x: CGFloat(x) * tileWidth + tileWidth / 2, y: CGFloat(y) * tileHeight + tileHeight / 2)
     }
 
-    func convertPoint(_ point: CGPoint) -> (success: Bool, col: Int, row: Int) {
-        if point.x >= 0 && point.x < CGFloat(maxCol) * tileWidth && point.y >= 0 && point.y < CGFloat(maxRow) * tileHeight {
+    func convertPoint(_ point: CGPoint) -> (success: Bool, x: Int, y: Int) {
+        if point.x >= 0 && point.x < CGFloat(maxX) * tileWidth && point.y >= 0 && point.y < CGFloat(maxY) * tileHeight {
             return (true, Int(point.x / tileWidth), Int(point.y / tileHeight))
         } else {
-            return (false, 0, 0)
+            return (false, -1, -1)
         }
     }
     
     func trySwap(horizontal horzDelta: Int, vertical vertDelta: Int) {
-        let toCol = swipeFromCol! + horzDelta
-        let toRow = swipeFromRow! + vertDelta
-        guard toCol >= 0 && toCol < maxCol && toRow >= 0 && toRow < maxRow else { return }
-        if let toCookie = level.cookieAt(col: toCol, row: toRow),
-            let fromCookie = level.cookieAt(col: swipeFromCol!, row: swipeFromRow!) {
-            print("Swapping (\(swipeFromRow ?? -1), \(swipeFromCol ?? -1)) <-> (\(toRow), \(toCol))")
+        let toX = swipeFromX! + horzDelta
+        let toY = swipeFromY! + vertDelta
+        guard toX >= 0 && toX < maxX && toY >= 0 && toY < maxY else { return }
+        if let toCookie = level.cookieAt(x: toX, y: toY), let fromCookie = level.cookieAt(x: swipeFromX!, y: swipeFromY!) {
+            print("Swapping (\(swipeFromX ?? -1), \(swipeFromY ?? -1)) <-> (\(toX), \(toY))")
             if let handler = swipeHandler {
                 let swap = Swap(cookieA: fromCookie, cookieB: toCookie)
                 handler(swap)
@@ -190,15 +211,13 @@ class GameScene: SKScene {
         
         spriteA.zPosition = 100
         spriteB.zPosition = 90
-        
-        let duration: TimeInterval = 0.2
-        
-        let moveA = SKAction.move(to: spriteB.position, duration: duration)
-        moveA.timingMode = .easeOut
+                
+        let moveA = SKAction.move(to: spriteB.position, duration: 0.0)
+        moveA.timingMode = .easeInEaseOut
         spriteA.run(moveA, completion: completion)
         
-        let moveB = SKAction.move(to: spriteA.position, duration: duration)
-        moveB.timingMode = .easeOut
+        let moveB = SKAction.move(to: spriteA.position, duration: 0.2)
+        moveB.timingMode = .easeInEaseOut
         spriteB.run(moveB)
     }
 
@@ -209,7 +228,7 @@ class GameScene: SKScene {
         if let sprite = cookie.sprite {
             let texture = SKTexture(imageNamed: cookie.cookieType.cookieName)
             selectionSprite.size = CGSize(width: tileWidth * 1.5, height: tileHeight * 1.5)
-            selectionSprite.run(SKAction.setTexture(texture))
+            selectionSprite.run(SKAction.sequence([SKAction.setTexture(texture), SKAction.fadeIn(withDuration: 0.1)]))
             
             sprite.addChild(selectionSprite)
             selectionSprite.alpha = 1.0
@@ -217,7 +236,7 @@ class GameScene: SKScene {
     }
 
     func hideSelectionIndicator() {
-        selectionSprite.run(SKAction.sequence([SKAction.fadeOut(withDuration: 0.03), SKAction.removeFromParent()]))
+        selectionSprite.run(SKAction.sequence([SKAction.fadeOut(withDuration: 0.2), SKAction.removeFromParent()]))
     }
 
 

@@ -40,28 +40,28 @@ enum CookieType: Int, CustomStringConvertible {
 }
 
 func ==(lhs: Cookie, rhs: Cookie) -> Bool {
-    return lhs.col == rhs.col && lhs.row == rhs.row
+    return lhs.x == rhs.x && lhs.y == rhs.y
 }
 
 class Cookie: CustomStringConvertible, Hashable {
-    var col: Int
-    var row: Int
+    var x: Int
+    var y: Int
     let cookieType: CookieType
     var sprite: SKSpriteNode?
     
 
-    init(col: Int, row: Int, cookieType: CookieType) {
-        self.col = col
-        self.row = row
+    init(x: Int, y: Int, cookieType: CookieType) {
+        self.x = x
+        self.y = y
         self.cookieType = cookieType
     }
     
     var description: String {
-        return "type:\(cookieType) square:(\(col),\(row))"
+        return "type:\(cookieType) square:(\(x),\(y))"
     }
     
     var hashValue: Int {
-        return row * 10 + col
+        return y * 10 + x
     }
 }
 

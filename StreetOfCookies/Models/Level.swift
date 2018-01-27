@@ -8,36 +8,36 @@
 
 import Foundation
 
-let maxCol = 9
-let maxRow = 9
+let maxX = 6
+let maxY = 8
 
 class Level {
-    fileprivate var cookies = Array2D<Cookie>(col: maxCol, row: maxRow)
-    fileprivate var tiles = Array2D<Tile>(col: maxCol, row: maxRow)
+    fileprivate var cookies = Array2D<Cookie>(x: maxX, y: maxY)
+    fileprivate var tiles = Array2D<Tile>(x: maxY, y: maxY)
 
     init(filename: String) {
         guard let dictionary = Dictionary<String, AnyObject>.loadJSONFromBundle(filename: filename) else { return }
         guard let tilesArray = dictionary["tiles"] as? [[Int]] else { return }
-        for (row, rowArray) in tilesArray.enumerated() {
-            let tileRow = maxRow - row - 1
-            for (col, value) in rowArray.enumerated() {
+        for (yArrayIndex, yArrayValue) in tilesArray.enumerated() {
+            let y = maxY - yArrayIndex - 1
+            for (x, value) in yArrayValue.enumerated() {
                 if value == 1 {
-                    tiles[col, tileRow] = Tile()
+                    tiles[x, y] = Tile()
                 }
             }
         }
     }
 
-    func cookieAt(col: Int, row: Int) -> Cookie? {
-        assert(col >= 0 && col < maxCol)
-        assert(row >= 0 && row < maxRow)
-        return cookies[col, row]
+    func cookieAt(x: Int, y: Int) -> Cookie? {
+        assert(x >= 0 && x < maxX)
+        assert(y >= 0 && y < maxY)
+        return cookies[x, y]
     }
 
-    func tileAt(col: Int, row: Int) -> Tile? {
-        assert(col >= 0 && col < maxCol)
-        assert(row >= 0 && row < maxRow)
-        return tiles[col, row]
+    func tileAt(x: Int, y: Int) -> Tile? {
+        assert(x >= 0 && x < maxX)
+        assert(y >= 0 && y < maxY)
+        return tiles[x, y]
     }
 
     func shuffle() -> Set<Cookie> {
@@ -47,12 +47,12 @@ class Level {
     private func createInitialCookies() -> Set<Cookie> {
         var set = Set<Cookie>()
         
-        for row in 0..<maxRow {
-            for col in 0..<maxCol {
-                if tiles[col, row] != nil {
+        for y in 0..<maxY {
+            for x in 0..<maxX {
+                if tiles[x, y] != nil {
                     var cookieType = CookieType.random() // Keep 'var'. Will be mutated later
-                    let cookie = Cookie(col: col, row: row, cookieType: cookieType)
-                    cookies[col, row] = cookie
+                    let cookie = Cookie(x: x, y: y, cookieType: cookieType)
+                    cookies[x, y] = cookie
                     set.insert(cookie)
                 }
             }
@@ -61,39 +61,39 @@ class Level {
     }
     
     func performSwap(swap: Swap) {
-        let colA = swap.cookieA.col
-        let rowA = swap.cookieA.row
-        let colB = swap.cookieB.col
-        let rowB = swap.cookieB.row
+        let xA = swap.cookieA.x
+        let yA = swap.cookieA.y
+        let xB = swap.cookieB.x
+        let yB = swap.cookieB.y
         
-        cookies[colA, rowA] = swap.cookieB
-        swap.cookieB.col = colA
-        swap.cookieB.row = rowA
+        cookies[xA, yA] = swap.cookieB
+        swap.cookieB.x = xA
+        swap.cookieB.y = yA
         
-        cookies[colB, rowB] = swap.cookieA
-        swap.cookieA.col = colB
-        swap.cookieA.row = rowB
+        cookies[xB, yB] = swap.cookieA
+        swap.cookieA.x = xB
+        swap.cookieA.y = yB
     }
 
 }
 
 struct Array2D<T> {
-    let col: Int
-    let row: Int
+    let x: Int
+    let y: Int
     fileprivate var array: Array<T?>
     
-    init(col: Int, row: Int) {
-        self.col = col
-        self.row = row
-        array = Array<T?>(repeating: nil, count: row * col)
+    init(x: Int, y: Int) {
+        self.x = x
+        self.y = y
+        array = Array<T?>(repeating: nil, count: x * y)
     }
     
     subscript(x: Int, y: Int) -> T? {
         get {
-            return array[x * col + y]
+            return array[y * maxX + x]
         }
         set {
-            array[x * col + y] = newValue
+            array[y * maxX + x] = newValue
         }
     }
 }
