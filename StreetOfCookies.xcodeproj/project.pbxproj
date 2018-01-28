@@ -20,6 +20,13 @@
 		BD1C1DD1201C239500FFE4F2 /* Level_1.json in Resources */ = {isa = PBXBuildFile; fileRef = BD1C1DCC201C239500FFE4F2 /* Level_1.json */; };
 		BD1C1DD2201C239500FFE4F2 /* Level_2.json in Resources */ = {isa = PBXBuildFile; fileRef = BD1C1DCD201C239500FFE4F2 /* Level_2.json */; };
 		BD1C1DD3201C239500FFE4F2 /* Level_0.json in Resources */ = {isa = PBXBuildFile; fileRef = BD1C1DCE201C239500FFE4F2 /* Level_0.json */; };
+		BD4FB956201CF222000E4894 /* Chain.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4FB955201CF222000E4894 /* Chain.swift */; };
+		BD4FB95D201D64DA000E4894 /* Scrape.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB957201D64D7000E4894 /* Scrape.wav */; };
+		BD4FB95E201D64DA000E4894 /* Chomp.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB958201D64D7000E4894 /* Chomp.wav */; };
+		BD4FB95F201D64DA000E4894 /* Error.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB959201D64D7000E4894 /* Error.wav */; };
+		BD4FB960201D64DA000E4894 /* Ka-Ching.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95A201D64D8000E4894 /* Ka-Ching.wav */; };
+		BD4FB961201D64DA000E4894 /* Drip.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95B201D64D8000E4894 /* Drip.wav */; };
+		BD4FB962201D64DA000E4894 /* Mining by Moonlight.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95C201D64D9000E4894 /* Mining by Moonlight.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +45,13 @@
 		BD1C1DCC201C239500FFE4F2 /* Level_1.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_1.json; sourceTree = "<group>"; };
 		BD1C1DCD201C239500FFE4F2 /* Level_2.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_2.json; sourceTree = "<group>"; };
 		BD1C1DCE201C239500FFE4F2 /* Level_0.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_0.json; sourceTree = "<group>"; };
+		BD4FB955201CF222000E4894 /* Chain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chain.swift; sourceTree = "<group>"; };
+		BD4FB957201D64D7000E4894 /* Scrape.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Scrape.wav; sourceTree = "<group>"; };
+		BD4FB958201D64D7000E4894 /* Chomp.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Chomp.wav; sourceTree = "<group>"; };
+		BD4FB959201D64D7000E4894 /* Error.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Error.wav; sourceTree = "<group>"; };
+		BD4FB95A201D64D8000E4894 /* Ka-Ching.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Ka-Ching.wav"; sourceTree = "<group>"; };
+		BD4FB95B201D64D8000E4894 /* Drip.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Drip.wav; sourceTree = "<group>"; };
+		BD4FB95C201D64D9000E4894 /* Mining by Moonlight.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "Mining by Moonlight.mp3"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,13 +84,14 @@
 		BD089FDC201B5CF600B6EECC /* StreetOfCookies */ = {
 			isa = PBXGroup;
 			children = (
-				BD1C1DD4201C23C800FFE4F2 /* Level */,
-				BD089FFD201B6D1000B6EECC /* Models */,
 				BD089FDD201B5CF600B6EECC /* AppDelegate.swift */,
-				BD089FE3201B5CF600B6EECC /* GameScene.swift */,
 				BD089FE5201B5CF600B6EECC /* GameViewController.swift */,
-				BD089FE7201B5CF600B6EECC /* Main.storyboard */,
+				BD089FE3201B5CF600B6EECC /* GameScene.swift */,
+				BD089FFD201B6D1000B6EECC /* Models */,
+				BD1C1DD4201C23C800FFE4F2 /* Level */,
 				BD089FEA201B5CF600B6EECC /* Assets.xcassets */,
+				BD4FB963201D64E6000E4894 /* Sounds */,
+				BD089FE7201B5CF600B6EECC /* Main.storyboard */,
 				BD089FEC201B5CF600B6EECC /* LaunchScreen.storyboard */,
 				BD089FEF201B5CF600B6EECC /* Info.plist */,
 			);
@@ -88,6 +103,7 @@
 			children = (
 				BD089FF7201B64D800B6EECC /* Cookie.swift */,
 				BD089FFB201B6CCF00B6EECC /* Level.swift */,
+				BD4FB955201CF222000E4894 /* Chain.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -102,6 +118,19 @@
 				BD1C1DCA201C239500FFE4F2 /* Level_4.json */,
 			);
 			path = Level;
+			sourceTree = "<group>";
+		};
+		BD4FB963201D64E6000E4894 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				BD4FB958201D64D7000E4894 /* Chomp.wav */,
+				BD4FB95B201D64D8000E4894 /* Drip.wav */,
+				BD4FB959201D64D7000E4894 /* Error.wav */,
+				BD4FB95A201D64D8000E4894 /* Ka-Ching.wav */,
+				BD4FB95C201D64D9000E4894 /* Mining by Moonlight.mp3 */,
+				BD4FB957201D64D7000E4894 /* Scrape.wav */,
+			);
+			path = Sounds;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -164,10 +193,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				BD089FE9201B5CF600B6EECC /* Main.storyboard in Resources */,
+				BD4FB961201D64DA000E4894 /* Drip.wav in Resources */,
 				BD1C1DD2201C239500FFE4F2 /* Level_2.json in Resources */,
+				BD4FB960201D64DA000E4894 /* Ka-Ching.wav in Resources */,
 				BD1C1DD0201C239500FFE4F2 /* Level_3.json in Resources */,
 				BD1C1DD3201C239500FFE4F2 /* Level_0.json in Resources */,
+				BD4FB95F201D64DA000E4894 /* Error.wav in Resources */,
+				BD4FB962201D64DA000E4894 /* Mining by Moonlight.mp3 in Resources */,
+				BD4FB95E201D64DA000E4894 /* Chomp.wav in Resources */,
 				BD089FEB201B5CF600B6EECC /* Assets.xcassets in Resources */,
+				BD4FB95D201D64DA000E4894 /* Scrape.wav in Resources */,
 				BD089FEE201B5CF600B6EECC /* LaunchScreen.storyboard in Resources */,
 				BD1C1DD1201C239500FFE4F2 /* Level_1.json in Resources */,
 				BD1C1DCF201C239500FFE4F2 /* Level_4.json in Resources */,
@@ -184,6 +219,7 @@
 				BD089FFC201B6CCF00B6EECC /* Level.swift in Sources */,
 				BD089FE4201B5CF600B6EECC /* GameScene.swift in Sources */,
 				BD089FF8201B64D800B6EECC /* Cookie.swift in Sources */,
+				BD4FB956201CF222000E4894 /* Chain.swift in Sources */,
 				BD089FE6201B5CF600B6EECC /* GameViewController.swift in Sources */,
 				BD089FDE201B5CF600B6EECC /* AppDelegate.swift in Sources */,
 			);

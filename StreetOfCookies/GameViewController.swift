@@ -25,7 +25,9 @@ class GameViewController: UIViewController {
         
         if let view = self.view as! SKView? {
             view.isMultipleTouchEnabled = false
-        
+            view.showsFPS = true
+            view.showsNodeCount = true
+
             // Create and configure the scene.
             scene = GameScene(size: view.bounds.size)
             scene.scaleMode = .aspectFill
@@ -33,14 +35,13 @@ class GameViewController: UIViewController {
             level = Level(filename: "Level_0")
             scene.level = level
             scene.swipeHandler = handleSwipe
+            scene.moveDoneHandler = handleMoveDone
+            scene.addTiles()
 
             // Present the scene.
             view.presentScene(scene)
-            
-            beginGame()
 
-            view.showsFPS = true
-            view.showsNodeCount = true
+            beginGame()
         }
     }
 
@@ -76,14 +77,35 @@ class GameViewController: UIViewController {
     
     func handleSwipe(_ swap: Swap) {
         view.isUserInteractionEnabled = false
-        
         level.performSwap(swap: swap)
-        
-        scene.animate(swap) {
-            self.view.isUserInteractionEnabled = true
+        scene.animate(swap, completion: {})
+    }
+    
+    func handleMoveDone() {
+        self.handleMatches()
+    }
+    
+    func handleMatches() {
+        let chains = level.removeMatches()
+
+        if chains.count == 0 {
+            beginNextTurn()
+            return
+        }
+
+        scene.animateMatchedCookies(for: chains) {
+            let array2D = self.level.fillHoles()
+            self.scene.animateFallingCookies(array2D: array2D) {
+                let array2D = self.level.topUpCookies()
+                self.scene.animateNewCookies(array2D) {
+                    self.handleMatches()
+                }
+            }
         }
     }
-
-
+    
+    func beginNextTurn() {
+        view.isUserInteractionEnabled = true
+    }
 
 }

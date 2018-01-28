@@ -27,7 +27,13 @@ class GameScene: SKScene {
     var selectionSprite = SKSpriteNode()
 
     var swipeHandler: ((Swap) -> ())?
-    
+    var moveDoneHandler: (() -> ())?
+
+    // Pre-load sounds
+    let scrapeSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false)
+    let chompSound = SKAction.playSoundFileNamed("Chomp.wav", waitForCompletion: false)
+    let dripSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false)
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder) is not used in this app")
     }
@@ -77,7 +83,6 @@ class GameScene: SKScene {
                 oriY = y
             }
         }
-        print("Begin (\(swipeFromX ?? -1), \(swipeFromY ?? -1))")
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -90,49 +95,48 @@ class GameScene: SKScene {
             var vertDelta = 0
             
             if location.x > CGFloat(oriX) * tileWidth + tileWidth * 1.1 && location.y > CGFloat(oriY) * tileHeight + tileHeight * 1.1 {
-                print("Get Up-Right")
+                //print("Get Up-Right")
                 horzDelta = 1
                 vertDelta = 1
                 oriX = x
                 oriY = y
             } else if location.x < CGFloat(oriX) * tileWidth - tileWidth * 0.1 && location.y > CGFloat(oriY) * tileHeight + tileHeight * 1.1 {
-                print("Get Up-Left")
+                //print("Get Up-Left")
                 horzDelta = -1
                 vertDelta = 1
                 oriX = x
                 oriY = y
             } else if location.x > CGFloat(oriX) * tileWidth + tileWidth * 1.1 && location.y < CGFloat(oriY) * tileHeight - tileHeight * 0.1 {
-                print("Get Down-Right")
+                //print("Get Down-Right")
                 horzDelta = 1
                 vertDelta = -1
                 oriX = x
                 oriY = y
             } else if location.x < CGFloat(oriX) * tileWidth - tileWidth * 0.1 && location.y < CGFloat(oriY) * tileHeight - tileHeight * 0.1 {
-                print("Get Down-Left")
+                //print("Get Down-Left")
                 horzDelta = -1
                 vertDelta = -1
                 oriX = x
                 oriY = y
             } else if location.x > CGFloat(oriX) * tileWidth + tileWidth * 1.2 {
-                print("Get Right")
+                //print("Get Right")
                 horzDelta = 1
                 oriX = x
             } else if location.x < CGFloat(oriX) * tileWidth - tileWidth * 0.2 {
-                print("Get Left")
+                //print("Get Left")
                 horzDelta = -1
                 oriX = x
             } else if location.y > CGFloat(oriY) * tileHeight + tileHeight * 1.2 {
-                print("Get Up")
+                //print("Get Up")
                 vertDelta = 1
                 oriY = y
             } else if location.y < CGFloat(oriY) * tileHeight - tileHeight * 0.2 {
-                print("Get Down")
+                //print("Get Down")
                 vertDelta = -1
                 oriY = y
             }
 
             if horzDelta != 0 || vertDelta != 0 {
-                print("Move (\(x), \(y))")
                 trySwap(horizontal: horzDelta, vertical: vertDelta)
                 swipeFromX = oriX
                 swipeFromY = oriY
@@ -144,9 +148,13 @@ class GameScene: SKScene {
         if selectionSprite.parent != nil && swipeFromX != nil  && swipeFromY != nil {
             hideSelectionIndicator()
         }
-        swipeFromX = nil
-        swipeFromY = nil
-        print("End (\(swipeFromX ?? -1), \(swipeFromY ?? -1))")
+        if swipeFromX != nil && swipeFromY != nil {
+            if let handler = moveDoneHandler {
+                handler()
+            }
+            swipeFromX = nil
+            swipeFromY = nil
+        }
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -192,12 +200,29 @@ class GameScene: SKScene {
         }
     }
     
+    func showSelectionIndicator(for cookie: Cookie) {
+        if selectionSprite.parent != nil {
+            selectionSprite.removeFromParent()
+        }
+        if let sprite = cookie.sprite {
+            let texture = SKTexture(imageNamed: cookie.cookieType.cookieName)
+            selectionSprite.size = CGSize(width: tileWidth * 1.5, height: tileHeight * 1.5)
+            selectionSprite.run(SKAction.sequence([SKAction.setTexture(texture), SKAction.fadeIn(withDuration: 0.1)]))
+            
+            sprite.addChild(selectionSprite)
+            selectionSprite.alpha = 1.0
+        }
+    }
+    
+    func hideSelectionIndicator() {
+        selectionSprite.run(SKAction.sequence([SKAction.fadeOut(withDuration: 0.2), SKAction.removeFromParent()]))
+    }
+
     func trySwap(horizontal horzDelta: Int, vertical vertDelta: Int) {
         let toX = swipeFromX! + horzDelta
         let toY = swipeFromY! + vertDelta
         guard toX >= 0 && toX < maxX && toY >= 0 && toY < maxY else { return }
         if let toCookie = level.cookieAt(x: toX, y: toY), let fromCookie = level.cookieAt(x: swipeFromX!, y: swipeFromY!) {
-            print("Swapping (\(swipeFromX ?? -1), \(swipeFromY ?? -1)) <-> (\(toX), \(toY))")
             if let handler = swipeHandler {
                 let swap = Swap(cookieA: fromCookie, cookieB: toCookie)
                 handler(swap)
@@ -216,27 +241,70 @@ class GameScene: SKScene {
         moveA.timingMode = .easeInEaseOut
         spriteA.run(moveA, completion: completion)
         
-        let moveB = SKAction.move(to: spriteA.position, duration: 0.2)
+        let moveB = SKAction.move(to: spriteA.position, duration: 0.1)
         moveB.timingMode = .easeInEaseOut
         spriteB.run(moveB)
+
+        run(scrapeSound)
     }
 
-    func showSelectionIndicator(for cookie: Cookie) {
-        if selectionSprite.parent != nil {
-            selectionSprite.removeFromParent()
+    func animateMatchedCookies(for chains: Set<Chain>, completion: @escaping () -> ()) {
+        for chain in chains {
+            for cookie in chain.cookies {
+                if let sprite = cookie.sprite {
+                    if sprite.action(forKey: "removing") == nil {
+                        let scaleAction = SKAction.scale(to: 0.1, duration: 0.3)
+                        scaleAction.timingMode = .easeOut
+                        sprite.run(SKAction.sequence([scaleAction, SKAction.removeFromParent()]),
+                                   withKey:"removing")
+                    }
+                }
+            }
         }
-        if let sprite = cookie.sprite {
-            let texture = SKTexture(imageNamed: cookie.cookieType.cookieName)
-            selectionSprite.size = CGSize(width: tileWidth * 1.5, height: tileHeight * 1.5)
-            selectionSprite.run(SKAction.sequence([SKAction.setTexture(texture), SKAction.fadeIn(withDuration: 0.1)]))
-            
-            sprite.addChild(selectionSprite)
-            selectionSprite.alpha = 1.0
-        }
+        run(SKAction.wait(forDuration: 0.3), completion: completion)
+
+        run(chompSound)
     }
 
-    func hideSelectionIndicator() {
-        selectionSprite.run(SKAction.sequence([SKAction.fadeOut(withDuration: 0.2), SKAction.removeFromParent()]))
+    func animateFallingCookies(array2D: [[Cookie]], completion: @escaping () -> ()) {
+        var longestDuration: TimeInterval = 0
+        for array in array2D {
+            for (idx, cookie) in array.enumerated() {
+                let sprite = cookie.sprite!
+                let newPosition = pointFor(x: cookie.x, y: cookie.y)
+                let delay = 0.05 + 0.15 * TimeInterval(idx)
+                let duration = TimeInterval(((sprite.position.y - newPosition.y) / tileHeight) * 0.1)
+                longestDuration = max(longestDuration, duration + delay)
+                let moveAction = SKAction.move(to: newPosition, duration: duration)
+                moveAction.timingMode = .easeOut
+                //sprite.run(moveAction, completion: completion)
+                sprite.run(SKAction.sequence([SKAction.wait(forDuration: delay), SKAction.group([moveAction, dripSound])]))
+            }
+        }
+        run(SKAction.wait(forDuration: longestDuration), completion: completion)
+    }
+
+    func animateNewCookies(_ array2D: [[Cookie]], completion: @escaping () -> ()) {
+        var longestDuration: TimeInterval = 0
+        for array in array2D {
+            let startY = array[0].y + 1
+            for (idx, cookie) in array.enumerated() {
+                let newCookie = SKSpriteNode(imageNamed: cookie.cookieType.cookieName)
+                newCookie.size = CGSize(width: tileWidth, height: tileHeight)
+                newCookie.position = pointFor(x: cookie.x, y: startY)
+                cookiesLayer.addChild(newCookie)
+                cookie.sprite = newCookie
+                let delay = 0.05 + 0.1 * TimeInterval(array.count - idx - 1)
+                let duration = TimeInterval(startY - cookie.y) * 0.05
+                longestDuration = max(longestDuration, duration + delay)
+                let newPosition = pointFor(x: cookie.x, y: cookie.y)
+                let moveAction = SKAction.move(to: newPosition, duration: duration)
+                moveAction.timingMode = .easeOut
+                newCookie.alpha = 0
+                newCookie.run(SKAction.sequence([SKAction.wait(forDuration: delay), SKAction.group([SKAction.fadeIn(withDuration: 0.05), moveAction, dripSound])]))
+            }
+        }
+        run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
 
 
