@@ -14,12 +14,26 @@
 import UIKit
 import SpriteKit
 //import GameplayKit
+import AVFoundation
 
 class GameViewController: UIViewController {
 
     var scene: GameScene!
     var level: Level!
     
+    lazy var backgroundMusic: AVAudioPlayer? = {
+        guard let url = Bundle.main.url(forResource: "Mining by Moonlight", withExtension: "mp3") else {
+            return nil
+        }
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.numberOfLoops = -1
+            return player
+        } catch {
+            return nil
+        }
+    }()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -42,6 +56,7 @@ class GameViewController: UIViewController {
             view.presentScene(scene)
 
             beginGame()
+            backgroundMusic?.play()
         }
     }
 
@@ -86,7 +101,10 @@ class GameViewController: UIViewController {
     }
     
     func handleMatches() {
+        view.isUserInteractionEnabled = false
+        
         let chains = level.removeMatches()
+        scene.chain += chains.count
 
         if chains.count == 0 {
             beginNextTurn()
@@ -106,6 +124,14 @@ class GameViewController: UIViewController {
     
     func beginNextTurn() {
         view.isUserInteractionEnabled = true
+        scene.chain = 0
+        
+        if scene.playerHP == 0 {
+            print("Game Over!!")
+        } else if scene.playerHP == maxHealth {
+            print("Next Level Open!!")
+        }
+        
     }
 
 }

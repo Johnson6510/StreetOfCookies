@@ -8,6 +8,10 @@
 
 import SpriteKit
 //import GameplayKit
+import AVFoundation
+
+let maxHealth = 1000
+let maxTime: Double = 3.0
 
 class GameScene: SKScene {
     var level: Level!
@@ -18,11 +22,22 @@ class GameScene: SKScene {
     let gameLayer = SKNode()
     let cookiesLayer = SKNode()
     let tilesLayer = SKNode()
+    
+    let playerHealthBar = SKSpriteNode()
+    var playerHP = maxHealth / 2
+
+    let timerBar = SKSpriteNode()
+    var time = maxTime
+    weak var timer: Timer?
+
+    var chain: Int = 0
 
     private var swipeFromX: Int?
     private var swipeFromY: Int?
     private var oriX = -1
     private var oriY = -1
+    
+    private var isMoved = false
 
     var selectionSprite = SKSpriteNode()
 
@@ -46,6 +61,8 @@ class GameScene: SKScene {
 
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
         
+        timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(advanceTimer), userInfo: nil, repeats: true)
+
         let background = SKSpriteNode(imageNamed: "Background")
         background.size = size
         addChild(background)
@@ -60,14 +77,24 @@ class GameScene: SKScene {
         cookiesLayer.position = layerPosition
         gameLayer.addChild(cookiesLayer)
 
-        //view -+- background             +- tileNode(x*y)
-        //      +- gameLayer -+- tilesLayer
-        //                   -+- cookiesLayer
-        //                                  +- cookieNode(x*y)
+        playerHealthBar.position = CGPoint(x: 0, y: 300)
+        gameLayer.addChild(playerHealthBar)
+        timerBar.position = CGPoint(x: 0, y: 295)
+        gameLayer.addChild(timerBar)
+
+        //view -+- background
+        //      +- gameLayer -+- tilesLayer -+- tileNode(x*y)
+        //                    |
+        //                    +- cookiesLayer -+- cookieNode(x*y)
+        //                    |
+        //                    +- playerHealthBar
+        //                    +- timerBar
     }
     
     override func didMove(to view: SKView) {
         //did this func when first time move atcion
+        updateHealthBar(node: playerHealthBar, hp: playerHP)
+        updateTimerBar(node: timerBar, time: time)
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -83,6 +110,7 @@ class GameScene: SKScene {
                 oriY = y
             }
         }
+        isMoved = false
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -140,6 +168,7 @@ class GameScene: SKScene {
                 trySwap(horizontal: horzDelta, vertical: vertDelta)
                 swipeFromX = oriX
                 swipeFromY = oriY
+                isMoved = true
             }
         }
     }
@@ -149,8 +178,13 @@ class GameScene: SKScene {
             hideSelectionIndicator()
         }
         if swipeFromX != nil && swipeFromY != nil {
+            if isMoved {
+                playerHP = max(0, playerHP - 100)
+            }
             if let handler = moveDoneHandler {
                 handler()
+                isMoved = false
+                time = maxTime
             }
             swipeFromX = nil
             swipeFromY = nil
@@ -163,6 +197,8 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
+        updateHealthBar(node: playerHealthBar, hp: playerHP)
+        updateTimerBar(node: timerBar, time: time)
     }
 
     func addTiles() {
@@ -249,10 +285,12 @@ class GameScene: SKScene {
     }
 
     func animateMatchedCookies(for chains: Set<Chain>, completion: @escaping () -> ()) {
+        var removeCount = 0
         for chain in chains {
             for cookie in chain.cookies {
                 if let sprite = cookie.sprite {
                     if sprite.action(forKey: "removing") == nil {
+                        removeCount += 1
                         let scaleAction = SKAction.scale(to: 0.1, duration: 0.3)
                         scaleAction.timingMode = .easeOut
                         sprite.run(SKAction.sequence([scaleAction, SKAction.removeFromParent()]),
@@ -262,7 +300,12 @@ class GameScene: SKScene {
             }
         }
         run(SKAction.wait(forDuration: 0.3), completion: completion)
-
+        
+        let addHp = (1 + chain) * removeCount
+        print("Hp = ", playerHP, ", Chain = ", chain ,", Cookie = ", removeCount, ", Hp add ", addHp)
+        playerHP = min(maxHealth, playerHP + addHp)
+        print("Hp = ", playerHP)
+        
         run(chompSound)
     }
 
@@ -277,7 +320,6 @@ class GameScene: SKScene {
                 longestDuration = max(longestDuration, duration + delay)
                 let moveAction = SKAction.move(to: newPosition, duration: duration)
                 moveAction.timingMode = .easeOut
-                //sprite.run(moveAction, completion: completion)
                 sprite.run(SKAction.sequence([SKAction.wait(forDuration: delay), SKAction.group([moveAction, dripSound])]))
             }
         }
@@ -307,5 +349,92 @@ class GameScene: SKScene {
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
 
+    func updateHealthBar(node: SKSpriteNode, hp: Int) {
+        let healthBarWidth: CGFloat = tileWidth * CGFloat(maxX)
+        let healthBarHeight: CGFloat = 10
+        
+        let barSize = CGSize(width: healthBarWidth, height: healthBarHeight);
+        
+        let fillColor = UIColor(red: 200.0/255, green: 50.0/255, blue: 50.0/255, alpha:1)
+        let borderColor = UIColor(red: 35.0/255, green: 28.0/255, blue: 40.0/255, alpha:1)
+        
+        // create drawing context
+        UIGraphicsBeginImageContextWithOptions(barSize, false, 0)
+        let context = UIGraphicsGetCurrentContext()
+        
+        // draw the outline for the health bar
+        borderColor.setStroke()
+        let borderRect = CGRect(origin: .zero, size: barSize)
+        context!.stroke(borderRect, width: 1)
+        
+        // draw the health bar with a colored rectangle
+        fillColor.setFill()
+        let barWidth = (barSize.width - 1) * CGFloat(hp) / CGFloat(maxHealth)
+        let barRect = CGRect(x: 0.5, y: 0.5, width: barWidth, height: barSize.height - 1)
+        context!.fill(barRect)
+        
+        // extract image
+        let spriteImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        // set sprite texture and size
+        node.texture = SKTexture(image: spriteImage!)
+        node.size = barSize
+        
+        let action = SKAction.fadeIn(withDuration: 0.5)
+        node.run(action)
+    }
 
+    func updateTimerBar(node: SKSpriteNode, time: Double) {
+        let timerBarWidth: CGFloat = tileWidth * CGFloat(maxX)
+        let timerBarHeight: CGFloat = 5
+        
+        let barSize = CGSize(width: timerBarWidth, height: timerBarHeight);
+        
+        let fillColor = UIColor(red: 113.0/255, green: 202.0/255, blue: 53.0/255, alpha:1)
+        let borderColor = UIColor(red: 35.0/255, green: 28.0/255, blue: 40.0/255, alpha:1)
+        
+        // create drawing context
+        UIGraphicsBeginImageContextWithOptions(barSize, false, 0)
+        let context = UIGraphicsGetCurrentContext()
+        
+        // draw the outline for the health bar
+        borderColor.setStroke()
+        let borderRect = CGRect(origin: .zero, size: barSize)
+        context!.stroke(borderRect, width: 1)
+        
+        // draw the health bar with a colored rectangle
+        fillColor.setFill()
+        let barWidth = (barSize.width - 1) * CGFloat(time) / CGFloat(maxTime)
+        let barRect = CGRect(x: 0.5, y: 0.5, width: barWidth, height: barSize.height - 1)
+        context!.fill(barRect)
+        
+        // extract image
+        let spriteImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        // set sprite texture and size
+        node.texture = SKTexture(image: spriteImage!)
+        node.size = barSize
+    }
+
+    @objc func advanceTimer() {
+        if isMoved {
+            time = max(0, time - 0.01)
+        }
+
+        if time == 0 {
+            playerHP = max(0, playerHP - 100)
+            if let handler = moveDoneHandler {
+                hideSelectionIndicator()
+                handler()
+                isMoved = false
+                time = maxTime
+                swipeFromX = nil
+                swipeFromY = nil
+            }
+        }
+    }
+
+    
 }
