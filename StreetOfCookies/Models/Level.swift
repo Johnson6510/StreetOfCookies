@@ -137,6 +137,187 @@ class Level {
         return set
     }
     
+    private func detectHorizontalNearChains(horizontalChains: Set<Chain>) -> (Set<Chain>, Int) {
+        var set = Set<Chain>()
+        var nearSet = Set<Chain>()
+        var matchCookies: Bool = false
+        var matchCookie: Bool = false
+        var matchCount: Int = 0
+
+        for horizontalChain1 in horizontalChains {
+            for horizontalChain2 in horizontalChains {
+                if horizontalChain1 != horizontalChain2 && horizontalChain1.firstCookie().cookieType == horizontalChain2.firstCookie().cookieType {
+                    if horizontalChain1.firstCookie().x <= horizontalChain2.firstCookie().x &&
+                        horizontalChain1.lastCookie().x >= horizontalChain2.lastCookie().x &&
+                        horizontalChain2.firstCookie().y - horizontalChain1.firstCookie().y == 1 {
+                        matchCookies = true
+                    } else if horizontalChain2.firstCookie().x <= horizontalChain1.firstCookie().x &&
+                        horizontalChain2.lastCookie().x >= horizontalChain1.lastCookie().x &&
+                        horizontalChain2.firstCookie().y - horizontalChain1.firstCookie().y == 1 {
+                        matchCookies = true
+                    }
+                    if matchCookies {
+                        let chain = Chain(chainType: .horizontal)
+                        for horizontalCookie1 in horizontalChain1.cookies {
+                            for horizontalCookie2 in horizontalChain2.cookies {
+                                //print("Compare:", horizontalCookie1, horizontalCookie2)
+                                if horizontalCookie1 == horizontalCookie2 {
+                                    matchCookie = true
+                                }
+                            }
+                            if !matchCookie {
+                                chain.add(cookie: horizontalCookie1)
+                                print("Add_Cookie: ", horizontalCookie1)
+                            } else {
+                                print("Match!!")
+                                matchCookie = false
+                            }
+                        }
+                        for horizontalCookie2 in horizontalChain2.cookies {
+                            chain.add(cookie: horizontalCookie2)
+                            print("Add_Cookie: ", horizontalCookie2)
+                        }
+                        if matchCookies {
+                            print("Add_chain!!!")
+                            nearSet.insert(chain)
+                            matchCookies = false
+                        }
+                    }
+                }
+            }
+        }
+
+        for horizontalChain in horizontalChains {
+            for nearChain in nearSet {
+                if horizontalChain.firstCookie().cookieType == nearChain.firstCookie().cookieType {
+                    for horizontalCookie in horizontalChain.cookies {
+                        for nearCookie in nearChain.cookies {
+                            if nearCookie == horizontalCookie {
+                                matchCookie = true
+                                matchCount += 1
+                                break
+                            }
+                        }
+                        if matchCookie { break }
+                    }
+                    if matchCookie { break }
+                }
+            }
+            if !matchCookie {
+                set.insert(horizontalChain)
+            } else {
+                matchCookie = false
+            }
+        }
+
+        set.formUnion(nearSet)
+        return (set, matchCount)
+        
+        /*
+        print("matchCount", matchCount)
+        if matchCount == 0 {
+            set.formUnion(nearSet)
+            if set.isEmpty {
+                set = horizontalChains
+            }
+            return set
+        } else {
+            return detectHorizontaNearChains(horizontalChains: set)
+        }*/
+
+    }
+
+    private func detectVerticalNearChains(verticalChains: Set<Chain>) -> (Set<Chain>, Int) {
+        var set = Set<Chain>()
+        var nearSet = Set<Chain>()
+        var matchCookies: Bool = false
+        var matchCookie: Bool = false
+        var matchCount: Int = 0
+        
+        for verticalChain1 in verticalChains {
+            for verticalChain2 in verticalChains {
+                if verticalChain1 != verticalChain2 && verticalChain1.firstCookie().cookieType == verticalChain2.firstCookie().cookieType {
+                    if verticalChain1.firstCookie().y <= verticalChain2.firstCookie().y &&
+                        verticalChain1.lastCookie().y >= verticalChain2.lastCookie().y &&
+                        verticalChain2.firstCookie().x - verticalChain1.firstCookie().x == 1 {
+                        matchCookies = true
+                    } else if verticalChain2.firstCookie().y <= verticalChain1.firstCookie().y &&
+                        verticalChain2.lastCookie().y >= verticalChain1.lastCookie().y &&
+                        verticalChain2.firstCookie().x - verticalChain1.firstCookie().x == 1 {
+                        matchCookies = true
+                    }
+                    if matchCookies {
+                        let chain = Chain(chainType: .horizontal)
+                        for verticalCookie1 in verticalChain1.cookies {
+                            for verticalCookie2 in verticalChain2.cookies {
+                                //print("Compare:", horizontalCookie1, horizontalCookie2)
+                                if verticalCookie1 == verticalCookie2 {
+                                    matchCookie = true
+                                }
+                            }
+                            if !matchCookie {
+                                chain.add(cookie: verticalCookie1)
+                                print("Add_Cookie: ", verticalCookie1)
+                            } else {
+                                print("Match!!")
+                                matchCookie = false
+                            }
+                        }
+                        for verticalCookie2 in verticalChain2.cookies {
+                            chain.add(cookie: verticalCookie2)
+                            print("Add_Cookie: ", verticalCookie2)
+                        }
+                        if matchCookies {
+                            print("Add_chain!!!")
+                            nearSet.insert(chain)
+                            matchCookies = false
+                        }
+                    }
+                }
+            }
+        }
+        
+        for verticalChain in verticalChains {
+            for nearChain in nearSet {
+                if verticalChain.firstCookie().cookieType == nearChain.firstCookie().cookieType {
+                    for verticalCookie in verticalChain.cookies {
+                        for nearCookie in nearChain.cookies {
+                            if nearCookie == verticalCookie {
+                                matchCookie = true
+                                matchCount += 1
+                                break
+                            }
+                        }
+                        if matchCookie { break }
+                    }
+                    if matchCookie { break }
+                }
+            }
+            if !matchCookie {
+                set.insert(verticalChain)
+            } else {
+                matchCookie = false
+            }
+        }
+        
+        set.formUnion(nearSet)
+        return (set, matchCount)
+        
+        /*
+         print("matchCount", matchCount)
+         if matchCount == 0 {
+         set.formUnion(nearSet)
+         if set.isEmpty {
+         set = horizontalChains
+         }
+         return set
+         } else {
+         return detectHorizontaNearChains(horizontalChains: set)
+         }*/
+        
+    }
+    
+
     private func detectCrossChains(horizontalChains: Set<Chain>, verticalChains: Set<Chain>) -> Set<Chain> {
         var set = Set<Chain>()
         var crossSet = Set<Chain>()
@@ -159,7 +340,7 @@ class Level {
                     let chain = Chain(chainType: .cross)
                     for horizontalCookie in horizontalChain.cookies {
                         for verticalCookie in verticalChain.cookies {
-                            print("Compare:", horizontalCookie, verticalCookie)
+                            //print("Compare:", horizontalCookie, verticalCookie)
                             if horizontalCookie == verticalCookie {
                                 matchCookie = true
                                 matchCookies = true
@@ -169,18 +350,18 @@ class Level {
                         }
                         if !matchCookie {
                             chain.add(cookie: horizontalCookie)
-                            print("Add_H_Cookie: ", horizontalCookie)
+                            //print("Add_H_Cookie: ", horizontalCookie)
                         } else {
-                            print("Match!!")
+                            //print("Match!!")
                             matchCookie = false
                         }
                     }
                     for verticalCookie in verticalChain.cookies {
                         chain.add(cookie: verticalCookie)
-                        print("Add_V_Cookie: ", verticalCookie)
+                        //print("Add_V_Cookie: ", verticalCookie)
                     }
                     if matchCookies {
-                        print("Add_chain!!!")
+                        //print("Add_chain!!!")
                         crossSet.insert(chain)
                         matchCookie = false
                     }
@@ -191,6 +372,7 @@ class Level {
             }
             matchChain = false
         }
+        
         for verticalChain in verticalChains {
             for clossChain in crossSet {
                 if verticalChain.firstCookie().cookieType == clossChain.firstCookie().cookieType {
@@ -231,8 +413,20 @@ class Level {
     func removeMatches() -> Set<Chain> {
         let horizontalChains = detectHorizontalMatches()
         let verticalChains = detectVerticalMatches()
-        let mergeChains = detectCrossChains(horizontalChains: horizontalChains, verticalChains: verticalChains)
-        print(mergeChains)
+        
+        var horizontalNearChains = horizontalChains
+        var verticalNearChains = verticalChains
+        var matchCount = 0
+        repeat {
+            (horizontalNearChains, matchCount) = detectHorizontalNearChains(horizontalChains: horizontalNearChains)
+        } while matchCount != 0
+        //print(horizontalNearChains)
+        repeat {
+            (verticalNearChains, matchCount) = detectVerticalNearChains(verticalChains: verticalNearChains)
+        } while matchCount != 0
+
+        let mergeChains = detectCrossChains(horizontalChains: horizontalNearChains, verticalChains: verticalNearChains)
+        //print(mergeChains)
         //removeCookies(chains: horizontalChains)
         //removeCookies(chains: verticalChains)
         removeCookies(chains: mergeChains)
