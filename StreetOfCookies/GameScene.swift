@@ -7,11 +7,7 @@
 //
 
 import SpriteKit
-//import GameplayKit
 import AVFoundation
-
-let maxHealth = 1000
-let maxTime: Double = 3.0
 
 class GameScene: SKScene {
     var level: Level!
@@ -23,14 +19,19 @@ class GameScene: SKScene {
     let cookiesLayer = SKNode()
     let tilesLayer = SKNode()
     
+    var playerHP: Int = 0
     let playerHealthBar = SKSpriteNode()
-    var playerHP = maxHealth / 2
 
+    var moveTime: Double = 0
     let timerBar = SKSpriteNode()
-    var time = maxTime
     weak var timer: Timer?
 
-    var chain: Int = 0
+    var turn: Int = 0
+    var turnLabel: SKLabelNode? = nil
+
+    var combo: Int = 0
+    var lastCombo: Int = 0
+    var totalEatCookies: Int = 0
 
     private var swipeFromX: Int?
     private var swipeFromY: Int?
@@ -48,6 +49,7 @@ class GameScene: SKScene {
     let scrapeSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false)
     let chompSound = SKAction.playSoundFileNamed("Chomp.wav", waitForCompletion: false)
     let dripSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false)
+    let kaChingSound = SKAction.playSoundFileNamed("Ka-Ching.wav", waitForCompletion: false)
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder) is not used in this app")
@@ -61,8 +63,6 @@ class GameScene: SKScene {
 
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
         
-        timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(advanceTimer), userInfo: nil, repeats: true)
-
         let background = SKSpriteNode(imageNamed: "Background")
         background.size = size
         addChild(background)
@@ -77,11 +77,15 @@ class GameScene: SKScene {
         cookiesLayer.position = layerPosition
         gameLayer.addChild(cookiesLayer)
 
-        playerHealthBar.position = CGPoint(x: 0, y: 300)
+        playerHealthBar.position = CGPoint(x: 0, y: 280)
         gameLayer.addChild(playerHealthBar)
-        timerBar.position = CGPoint(x: 0, y: 295)
-        gameLayer.addChild(timerBar)
 
+        timerBar.position = CGPoint(x: 0, y: 268)
+        gameLayer.addChild(timerBar)
+        timer = Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(advanceTimer), userInfo: nil, repeats: true)
+        
+        turn = 0
+        
         //view -+- background
         //      +- gameLayer -+- tilesLayer -+- tileNode(x*y)
         //                    |
@@ -89,12 +93,11 @@ class GameScene: SKScene {
         //                    |
         //                    +- playerHealthBar
         //                    +- timerBar
+        //
     }
     
     override func didMove(to view: SKView) {
         //did this func when first time move atcion
-        updateHealthBar(node: playerHealthBar, hp: playerHP)
-        updateTimerBar(node: timerBar, time: time)
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -180,11 +183,12 @@ class GameScene: SKScene {
         if swipeFromX != nil && swipeFromY != nil {
             if isMoved {
                 playerHP = max(0, playerHP - 100)
+                turn += 1
+                animateTurn()
             }
             if let handler = moveDoneHandler {
                 handler()
                 isMoved = false
-                time = maxTime
             }
             swipeFromX = nil
             swipeFromY = nil
@@ -197,8 +201,9 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
-        updateHealthBar(node: playerHealthBar, hp: playerHP)
-        updateTimerBar(node: timerBar, time: time)
+        animateTurn()
+        updateHealthBar(node: playerHealthBar)
+        updateTimerBar(node: timerBar)
     }
 
     func addTiles() {
@@ -266,61 +271,81 @@ class GameScene: SKScene {
         }
     }
 
-    func animate(_ swap: Swap, completion: @escaping () -> ()) {
-        let spriteA = swap.cookieA.sprite!
-        let spriteB = swap.cookieB.sprite!
+    func animateSwap(_ swap: Swap, completion: @escaping () -> ()) {
+        let cookieA = swap.cookieA.sprite!
+        let cookieB = swap.cookieB.sprite!
         
-        spriteA.zPosition = 100
-        spriteB.zPosition = 90
+        cookieA.zPosition = 100
+        cookieB.zPosition = 90
                 
-        let moveA = SKAction.move(to: spriteB.position, duration: 0.0)
+        let moveA = SKAction.move(to: cookieB.position, duration: 0.0)
         moveA.timingMode = .easeInEaseOut
-        spriteA.run(moveA, completion: completion)
+        cookieA.run(moveA, completion: completion)
         
-        let moveB = SKAction.move(to: spriteA.position, duration: 0.1)
+        let moveB = SKAction.move(to: cookieA.position, duration: 0.05)
         moveB.timingMode = .easeInEaseOut
-        spriteB.run(moveB)
+        cookieB.run(moveB)
 
         run(scrapeSound)
     }
 
     func animateMatchedCookies(for chains: Set<Chain>, completion: @escaping () -> ()) {
-        var removeCount = 0
+        let durationMove: TimeInterval = 0.2
+        let durationScale: TimeInterval = 0.2
+        let durationCombo: TimeInterval = durationMove + durationScale
+
+        var delay: TimeInterval
+
         for chain in chains {
+            delay = TimeInterval(combo - lastCombo) * (durationMove + durationScale + durationCombo)
             for cookie in chain.cookies {
-                if let sprite = cookie.sprite {
-                    if sprite.action(forKey: "removing") == nil {
-                        removeCount += 1
-                        let scaleAction = SKAction.scale(to: 0.1, duration: 0.3)
-                        scaleAction.timingMode = .easeOut
-                        sprite.run(SKAction.sequence([scaleAction, SKAction.removeFromParent()]),
-                                   withKey:"removing")
-                    }
-                }
+                let matchCookie = cookie.sprite!
+                let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 10), duration: durationMove)
+                moveAction.timingMode = .easeIn
+                matchCookie.run(moveAction)
+                matchCookie.run(SKAction.sequence([SKAction.wait(forDuration: delay), moveAction, chompSound]))
+
+                let scaleAction = SKAction.scale(to: 0.1, duration: durationScale)
+                scaleAction.timingMode = .easeOut
+                matchCookie.run(SKAction.sequence([SKAction.wait(forDuration: delay + durationMove), scaleAction, SKAction.removeFromParent()]))
             }
+            combo += 1
+            let comboLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
+            comboLabel.fontSize = 50
+            comboLabel.fontColor = SKColor.magenta
+            comboLabel.text = "Combo  \(combo)"
+            comboLabel.position = CGPoint(x: (view?.bounds.width)! / 2, y: (view?.bounds.height)! / 2 - 50)
+            comboLabel.zPosition = 300
+            comboLabel.isHidden = true
+            cookiesLayer.addChild(comboLabel)
+            
+            let comboAction = SKAction.move(by: CGVector(dx: 0, dy: 50), duration: durationCombo)
+            comboAction.timingMode = .easeOut
+
+            comboLabel.run(SKAction.sequence([SKAction.wait(forDuration: delay), SKAction.unhide(), comboAction, SKAction.removeFromParent()]))
+
+            totalEatCookies += chain.cookies.count
+            let addHp = (2 + combo) * totalEatCookies
+            playerHP = min(maxHealth, playerHP + addHp)
+            updateHealthBar(node: playerHealthBar)
         }
-        run(SKAction.wait(forDuration: 0.3), completion: completion)
-        
-        let addHp = (1 + chain) * removeCount
-        print("Hp = ", playerHP, ", Chain = ", chain ,", Cookie = ", removeCount, ", Hp add ", addHp)
-        playerHP = min(maxHealth, playerHP + addHp)
-        print("Hp = ", playerHP)
-        
-        run(chompSound)
+        let longestDuration = TimeInterval(combo - lastCombo + 1) * durationCombo
+        lastCombo += chains.count
+        run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
 
     func animateFallingCookies(array2D: [[Cookie]], completion: @escaping () -> ()) {
         var longestDuration: TimeInterval = 0
         for array in array2D {
             for (idx, cookie) in array.enumerated() {
-                let sprite = cookie.sprite!
+                let fallingCookie = cookie.sprite!
                 let newPosition = pointFor(x: cookie.x, y: cookie.y)
                 let delay = 0.05 + 0.15 * TimeInterval(idx)
-                let duration = TimeInterval(((sprite.position.y - newPosition.y) / tileHeight) * 0.1)
+                let duration = TimeInterval(((fallingCookie.position.y - newPosition.y) / tileHeight) * 0.1)
                 longestDuration = max(longestDuration, duration + delay)
                 let moveAction = SKAction.move(to: newPosition, duration: duration)
                 moveAction.timingMode = .easeOut
-                sprite.run(SKAction.sequence([SKAction.wait(forDuration: delay), SKAction.group([moveAction, dripSound])]))
+                fallingCookie.run(SKAction.sequence([SKAction.wait(forDuration: delay), SKAction.group([moveAction, dripSound])]))
             }
         }
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
@@ -348,14 +373,78 @@ class GameScene: SKScene {
         }
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
+    
+    func animateRemoveAllCookies(for chains: Set<Chain>, completion: @escaping () -> ()) {
+        var longestDuration: TimeInterval = 0
+        for chain in chains {
+            for cookie in chain.cookies {
+                let removeCookie = cookie.sprite!
 
-    func updateHealthBar(node: SKSpriteNode, hp: Int) {
+                var totalDuration: TimeInterval = 0
+                var duration: TimeInterval
+
+                duration = 0.15
+                totalDuration = totalDuration + duration
+                let rotateAction1 = SKAction.rotate(toAngle: CGFloat(Double.pi / 8), duration: duration)
+                removeCookie.run(rotateAction1)
+
+                duration = 0.15
+                totalDuration = totalDuration + duration
+                let rotateAction2 = SKAction.rotate(toAngle: CGFloat(-Double.pi / 8), duration: duration)
+                removeCookie.run(SKAction.sequence([SKAction.wait(forDuration: totalDuration), rotateAction2]))
+
+                duration = 0.15
+                totalDuration = totalDuration + duration
+                let rotateAction3 = SKAction.rotate(toAngle: CGFloat(0), duration: duration)
+                removeCookie.run(SKAction.sequence([SKAction.wait(forDuration: totalDuration), rotateAction3]))
+
+                duration = TimeInterval(cookie.y) * 0.15
+                totalDuration = totalDuration + duration
+                let newPosition = pointFor(x: cookie.x, y: 0)
+                let moveAction = SKAction.move(to: newPosition, duration: duration)
+                moveAction.timingMode = .easeIn
+                removeCookie.run(SKAction.sequence([SKAction.wait(forDuration: totalDuration), moveAction, kaChingSound]))
+                
+                duration = TimeInterval(cookie.y) * 0.10
+                totalDuration = totalDuration + duration
+                let scaleAction = SKAction.scale(to: 0.1, duration: duration)
+                scaleAction.timingMode = .easeIn
+                removeCookie.run(SKAction.sequence([SKAction.wait(forDuration: totalDuration), scaleAction, SKAction.removeFromParent()]))
+                
+                longestDuration = max(longestDuration, totalDuration)
+            }
+        }
+        run(SKAction.wait(forDuration: longestDuration), completion: completion)
+    }
+
+    func animateTurn() {
+        if turnLabel != nil {
+            turnLabel?.removeFromParent()
+        }
+        turnLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
+        turnLabel?.fontSize = 20
+        turnLabel?.fontColor = SKColor.blue
+        turnLabel?.text = "Turn \(turn)"
+        turnLabel?.position = CGPoint(x: 280, y: 560)
+        turnLabel?.zPosition = 300
+        tilesLayer.addChild(turnLabel!)
+        
+        let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 3), duration: 0.7)
+        moveAction.timingMode = .easeOut
+        turnLabel?.run(moveAction)
+    }
+    
+    func updateHealthBar(node: SKSpriteNode) {
         let healthBarWidth: CGFloat = tileWidth * CGFloat(maxX)
-        let healthBarHeight: CGFloat = 10
+        let healthBarHeight: CGFloat = 20
         
         let barSize = CGSize(width: healthBarWidth, height: healthBarHeight);
         
-        let fillColor = UIColor(red: 200.0/255, green: 50.0/255, blue: 50.0/255, alpha:1)
+        //255, 0, 0 -> red (hp = 0%)
+        //125, 0 , 0 -> orange (hp = 50%)
+        //255, 255, 0 -> yellow (hp = 100%)
+        let fillColor = UIColor(red: 1.0, green: CGFloat(playerHP)/CGFloat(maxHealth), blue: 0.0, alpha:1)
+        
         let borderColor = UIColor(red: 35.0/255, green: 28.0/255, blue: 40.0/255, alpha:1)
         
         // create drawing context
@@ -369,7 +458,7 @@ class GameScene: SKScene {
         
         // draw the health bar with a colored rectangle
         fillColor.setFill()
-        let barWidth = (barSize.width - 1) * CGFloat(hp) / CGFloat(maxHealth)
+        let barWidth = (barSize.width - 1) * CGFloat(playerHP) / CGFloat(maxHealth)
         let barRect = CGRect(x: 0.5, y: 0.5, width: barWidth, height: barSize.height - 1)
         context!.fill(barRect)
         
@@ -385,7 +474,7 @@ class GameScene: SKScene {
         node.run(action)
     }
 
-    func updateTimerBar(node: SKSpriteNode, time: Double) {
+    func updateTimerBar(node: SKSpriteNode) {
         let timerBarWidth: CGFloat = tileWidth * CGFloat(maxX)
         let timerBarHeight: CGFloat = 5
         
@@ -405,7 +494,7 @@ class GameScene: SKScene {
         
         // draw the health bar with a colored rectangle
         fillColor.setFill()
-        let barWidth = (barSize.width - 1) * CGFloat(time) / CGFloat(maxTime)
+        let barWidth = (barSize.width - 1) * CGFloat(moveTime) / CGFloat(level.moveTime)
         let barRect = CGRect(x: 0.5, y: 0.5, width: barWidth, height: barSize.height - 1)
         context!.fill(barRect)
         
@@ -420,16 +509,16 @@ class GameScene: SKScene {
 
     @objc func advanceTimer() {
         if isMoved {
-            time = max(0, time - 0.01)
+            moveTime = max(0, moveTime - 0.05)
         }
 
-        if time == 0 {
+        if moveTime == 0 {
             playerHP = max(0, playerHP - 100)
             if let handler = moveDoneHandler {
                 hideSelectionIndicator()
                 handler()
                 isMoved = false
-                time = maxTime
+                moveTime = level.moveTime
                 swipeFromX = nil
                 swipeFromY = nil
             }

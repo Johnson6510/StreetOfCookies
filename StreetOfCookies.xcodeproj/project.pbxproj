@@ -27,6 +27,11 @@
 		BD4FB960201D64DA000E4894 /* Ka-Ching.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95A201D64D8000E4894 /* Ka-Ching.wav */; };
 		BD4FB961201D64DA000E4894 /* Drip.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95B201D64D8000E4894 /* Drip.wav */; };
 		BD4FB962201D64DA000E4894 /* Mining by Moonlight.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95C201D64D9000E4894 /* Mining by Moonlight.mp3 */; };
+		BDF5D560201E3ED700EA32C3 /* Level_5.json in Resources */ = {isa = PBXBuildFile; fileRef = BDF5D55F201E3ED700EA32C3 /* Level_5.json */; };
+		BDF5D562201E3F1B00EA32C3 /* Level_6.json in Resources */ = {isa = PBXBuildFile; fileRef = BDF5D561201E3F1B00EA32C3 /* Level_6.json */; };
+		BDF5D564201E3F3F00EA32C3 /* Level_7.json in Resources */ = {isa = PBXBuildFile; fileRef = BDF5D563201E3F3F00EA32C3 /* Level_7.json */; };
+		BDF5D566201E3F5500EA32C3 /* Level_8.json in Resources */ = {isa = PBXBuildFile; fileRef = BDF5D565201E3F5500EA32C3 /* Level_8.json */; };
+		BDF5D568201E3F6900EA32C3 /* Level_9.json in Resources */ = {isa = PBXBuildFile; fileRef = BDF5D567201E3F6900EA32C3 /* Level_9.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +57,11 @@
 		BD4FB95A201D64D8000E4894 /* Ka-Ching.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Ka-Ching.wav"; sourceTree = "<group>"; };
 		BD4FB95B201D64D8000E4894 /* Drip.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Drip.wav; sourceTree = "<group>"; };
 		BD4FB95C201D64D9000E4894 /* Mining by Moonlight.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "Mining by Moonlight.mp3"; sourceTree = "<group>"; };
+		BDF5D55F201E3ED700EA32C3 /* Level_5.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_5.json; sourceTree = "<group>"; };
+		BDF5D561201E3F1B00EA32C3 /* Level_6.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_6.json; sourceTree = "<group>"; };
+		BDF5D563201E3F3F00EA32C3 /* Level_7.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_7.json; sourceTree = "<group>"; };
+		BDF5D565201E3F5500EA32C3 /* Level_8.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_8.json; sourceTree = "<group>"; };
+		BDF5D567201E3F6900EA32C3 /* Level_9.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_9.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +126,11 @@
 				BD1C1DCD201C239500FFE4F2 /* Level_2.json */,
 				BD1C1DCB201C239500FFE4F2 /* Level_3.json */,
 				BD1C1DCA201C239500FFE4F2 /* Level_4.json */,
+				BDF5D55F201E3ED700EA32C3 /* Level_5.json */,
+				BDF5D561201E3F1B00EA32C3 /* Level_6.json */,
+				BDF5D563201E3F3F00EA32C3 /* Level_7.json */,
+				BDF5D565201E3F5500EA32C3 /* Level_8.json */,
+				BDF5D567201E3F6900EA32C3 /* Level_9.json */,
 			);
 			path = Level;
 			sourceTree = "<group>";
@@ -193,6 +208,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				BD089FE9201B5CF600B6EECC /* Main.storyboard in Resources */,
+				BDF5D568201E3F6900EA32C3 /* Level_9.json in Resources */,
+				BDF5D566201E3F5500EA32C3 /* Level_8.json in Resources */,
+				BDF5D562201E3F1B00EA32C3 /* Level_6.json in Resources */,
+				BDF5D560201E3ED700EA32C3 /* Level_5.json in Resources */,
 				BD4FB961201D64DA000E4894 /* Drip.wav in Resources */,
 				BD1C1DD2201C239500FFE4F2 /* Level_2.json in Resources */,
 				BD4FB960201D64DA000E4894 /* Ka-Ching.wav in Resources */,
@@ -203,6 +222,7 @@
 				BD4FB95E201D64DA000E4894 /* Chomp.wav in Resources */,
 				BD089FEB201B5CF600B6EECC /* Assets.xcassets in Resources */,
 				BD4FB95D201D64DA000E4894 /* Scrape.wav in Resources */,
+				BDF5D564201E3F3F00EA32C3 /* Level_7.json in Resources */,
 				BD089FEE201B5CF600B6EECC /* LaunchScreen.storyboard in Resources */,
 				BD1C1DD1201C239500FFE4F2 /* Level_1.json in Resources */,
 				BD1C1DCF201C239500FFE4F2 /* Level_4.json in Resources */,

@@ -13,7 +13,6 @@
 
 import UIKit
 import SpriteKit
-//import GameplayKit
 import AVFoundation
 
 class GameViewController: UIViewController {
@@ -21,6 +20,11 @@ class GameViewController: UIViewController {
     var scene: GameScene!
     var level: Level!
     
+    var currentLevel = 0
+    
+    var gameOverPanel: UIImageView!
+    var tapGestureRecognizer: UITapGestureRecognizer!
+
     lazy var backgroundMusic: AVAudioPlayer? = {
         guard let url = Bundle.main.url(forResource: "Mining by Moonlight", withExtension: "mp3") else {
             return nil
@@ -38,26 +42,16 @@ class GameViewController: UIViewController {
         super.viewDidLoad()
         
         if let view = self.view as! SKView? {
-            view.isMultipleTouchEnabled = false
             view.showsFPS = true
             view.showsNodeCount = true
-
-            // Create and configure the scene.
-            scene = GameScene(size: view.bounds.size)
-            scene.scaleMode = .aspectFill
-
-            level = Level(filename: "Level_0")
-            scene.level = level
-            scene.swipeHandler = handleSwipe
-            scene.moveDoneHandler = handleMoveDone
-            scene.addTiles()
-
-            // Present the scene.
-            view.presentScene(scene)
-
-            beginGame()
-            backgroundMusic?.play()
         }
+        
+        gameOverPanel = UIImageView(frame: CGRect(x: 0, y: (view.bounds.size.height - 225) / 2, width: view.bounds.size.width, height: 225))
+        view.addSubview(gameOverPanel)
+        gameOverPanel.isHidden = true
+
+        setupLevel(levelNum: currentLevel)
+        backgroundMusic?.play()
     }
 
     override var shouldAutorotate: Bool {
@@ -81,10 +75,31 @@ class GameViewController: UIViewController {
         return true
     }
     
+    func setupLevel(levelNum: Int) {
+        let view = self.view as! SKView
+        view.isMultipleTouchEnabled = false
+        
+        scene = GameScene(size: view.bounds.size)
+        scene.scaleMode = .aspectFill
+        
+        level = Level(filename: "Level_\(levelNum)")
+        scene.level = level
+        scene.addTiles()
+        scene.swipeHandler = handleSwipe
+        scene.moveDoneHandler = handleMoveDone
+
+        gameOverPanel.isHidden = true
+        
+        view.presentScene(scene)
+        beginGame()
+    }
+
     func beginGame() {
+        scene.playerHP = level.lealth
+        scene.moveTime = level.moveTime
         shuffle()
     }
-    
+
     func shuffle() {
         let newCookies = level.shuffle()
         scene.addCookies(for: newCookies)
@@ -93,7 +108,7 @@ class GameViewController: UIViewController {
     func handleSwipe(_ swap: Swap) {
         view.isUserInteractionEnabled = false
         level.performSwap(swap: swap)
-        scene.animate(swap, completion: {})
+        scene.animateSwap(swap, completion: {})
     }
     
     func handleMoveDone() {
@@ -104,8 +119,6 @@ class GameViewController: UIViewController {
         view.isUserInteractionEnabled = false
         
         let chains = level.removeMatches()
-        scene.chain += chains.count
-
         if chains.count == 0 {
             beginNextTurn()
             return
@@ -124,14 +137,42 @@ class GameViewController: UIViewController {
     
     func beginNextTurn() {
         view.isUserInteractionEnabled = true
-        scene.chain = 0
-        
+        scene.combo = 0
+        scene.lastCombo = 0
+        scene.totalEatCookies = 0
+        scene.moveTime = level.moveTime
+
         if scene.playerHP == 0 {
             print("Game Over!!")
+            let chains = level.removeAllCookies()
+            scene.animateRemoveAllCookies(for: chains) {
+                self.gameOverPanel.image = UIImage(named: "GameOver")
+                self.showGameOver()
+            }
         } else if scene.playerHP == maxHealth {
             print("Next Level Open!!")
         }
-        
     }
+
+    @objc func showGameOver() {
+        gameOverPanel.isHidden = false
+        scene.isUserInteractionEnabled = false
+        
+        self.tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(hideGameOver))
+        self.view.addGestureRecognizer(self.tapGestureRecognizer)
+    }
+    
+    @objc func hideGameOver() {
+        view.removeGestureRecognizer(tapGestureRecognizer)
+        tapGestureRecognizer = nil
+        
+        gameOverPanel.isHidden = true
+        scene.isUserInteractionEnabled = true
+        
+        beginGame()
+        
+        print("Re-Start Game!!")
+    }
+
 
 }

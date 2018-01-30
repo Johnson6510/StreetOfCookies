@@ -10,11 +10,17 @@ import Foundation
 
 let maxX = 6
 let maxY = 8
+let maxLevels = 9
+let maxHealth: Int = 1000
+let maxTime: Double = 20.0
 
 class Level {
     fileprivate var cookies = Array2D<Cookie>(x: maxX, y: maxY)
     fileprivate var tiles = Array2D<Tile>(x: maxY, y: maxY)
-    
+
+    var lealth: Int = 0
+    var moveTime: Double = 0
+
     init(filename: String) {
         guard let dictionary = Dictionary<String, AnyObject>.loadJSONFromBundle(filename: filename) else { return }
         guard let tilesArray = dictionary["tiles"] as? [[Int]] else { return }
@@ -26,6 +32,8 @@ class Level {
                 }
             }
         }
+        lealth = dictionary["Health"] as! Int
+        moveTime = dictionary["Time"] as! Double
     }
 
     func cookieAt(x: Int, y: Int) -> Cookie? {
@@ -60,6 +68,7 @@ class Level {
                 }
             }
         }
+        
         return set
     }
     
@@ -99,6 +108,7 @@ class Level {
                 x += 1
             }
         }
+        
         return set
     }
     
@@ -123,15 +133,75 @@ class Level {
                 y += 1
             }
         }
+        
+        return set
+    }
+    
+    private func detectMergeChains(horizontalChains: Set<Chain>, verticalChains: Set<Chain>) -> Set<Chain> {
+        var set = Set<Chain>()
+        var match: Bool = false
+        
+        repeat {
+            match = false
+            for horizontalChain in horizontalChains {
+                for horizontalCookie in horizontalChain.cookies {
+                    for verticalChain in verticalChains {
+                        for verticalCookie in verticalChain.cookies {
+                            if horizontalCookie == verticalCookie {
+                                match = true
+                                let chain = Chain(chainType: .cross)
+                                for cookie in horizontalChain.cookies {
+                                    chain.add(cookie: cookie)
+                                }
+                                for cookie in verticalChain.cookies {
+                                    print(cookie, horizontalCookie, verticalCookie)
+                                    if cookie != horizontalCookie {
+                                        chain.add(cookie: cookie)
+                                    }
+                                }
+                                set.insert(chain)
+                                break
+                            }
+                        }
+                        if match == true {
+                            //
+                            verticalChain.cookies.removeAll()
+                            break
+                        } else {
+                            set.insert(verticalChain)
+                        }
+                    }
+                    if match == true {
+                        break
+                    }
+                }
+                if match == true {
+                    horizontalChain.cookies.removeAll()
+                    break
+                } else {
+                    set.insert(horizontalChain)
+                }
+            }
+            //print(horizontalChains)
+            //print(verticalChains)
+        } while match == true
+        
+        //set.formUnion(horizontalChains)
+        //set.formUnion(verticalChains)
+
         return set
     }
     
     func removeMatches() -> Set<Chain> {
         let horizontalChains = detectHorizontalMatches()
         let verticalChains = detectVerticalMatches()
+        //let mergeChains = detectMergeChains(horizontalChains: horizontalChains, verticalChains: verticalChains)
         removeCookies(chains: horizontalChains)
         removeCookies(chains: verticalChains)
+        //removeCookies(chains: mergeChains)
+        //print(mergeChains)
 
+        //return mergeChains
         return horizontalChains.union(verticalChains)
     }
     
@@ -141,6 +211,22 @@ class Level {
                 cookies[cookie.x, cookie.y] = nil
             }
         }
+    }
+    
+    func removeAllCookies() -> Set<Chain> {
+        var set = Set<Chain>()
+        for y in 0..<maxY {
+            let chain = Chain(chainType: .horizontal)
+            for x in 0..<maxX {
+                if tiles[x, y] != nil {
+                    chain.add(cookie: cookies[x, y]!)
+                    cookies[x, y] = nil
+                }
+            }
+            set.insert(chain)
+        }
+        
+        return set
     }
     
     func fillHoles() -> [[Cookie]] {

@@ -16,11 +16,13 @@ class Chain: Hashable, CustomStringConvertible {
     enum ChainType: CustomStringConvertible {
         case horizontal
         case vertical
-        
+        case cross
+
         var description: String {
             switch self {
             case .horizontal: return "Horizontal"
             case .vertical: return "Vertical"
+            case .cross: return "Cross"
             }
         }
     }
@@ -34,7 +36,7 @@ class Chain: Hashable, CustomStringConvertible {
     func add(cookie: Cookie) {
         cookies.append(cookie)
     }
-    
+
     func firstCookie() -> Cookie {
         return cookies[0]
     }
