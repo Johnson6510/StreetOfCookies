@@ -13,26 +13,6 @@ func ==(lhs: Chain, rhs: Chain) -> Bool {
 class Chain: Hashable, CustomStringConvertible {
     var cookies = [Cookie]()
     
-    enum ChainType: CustomStringConvertible {
-        case horizontal
-        case vertical
-        case cross
-
-        var description: String {
-            switch self {
-            case .horizontal: return "Horizontal"
-            case .vertical: return "Vertical"
-            case .cross: return "Cross"
-            }
-        }
-    }
-    
-    var chainType: ChainType
-    
-    init(chainType: ChainType) {
-        self.chainType = chainType
-    }
-    
     func add(cookie: Cookie) {
         cookies.append(cookie)
     }
@@ -50,7 +30,7 @@ class Chain: Hashable, CustomStringConvertible {
     }
     
     var description: String {
-        return "type:\(chainType) cookies:\(cookies)"
+        return "cookies:\(cookies)"
     }
     
     var hashValue: Int {

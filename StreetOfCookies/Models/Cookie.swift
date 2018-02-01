@@ -33,8 +33,8 @@ enum CookieType: Int, CustomStringConvertible {
         return cookieName
     }
 
-    static func random() -> CookieType {
-        return CookieType(rawValue: Int(arc4random_uniform(6)) + 1)!
+    static func random(_ dice: Int) -> CookieType {
+        return CookieType(rawValue: Int(arc4random_uniform(UInt32(dice))) + 1)!
     }
 
 }

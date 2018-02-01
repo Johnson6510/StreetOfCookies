@@ -294,6 +294,7 @@ class GameScene: SKScene {
         let durationScale: TimeInterval = 0.2
         let durationCombo: TimeInterval = durationMove + durationScale
 
+        var longestDuration: TimeInterval = 0
         var delay: TimeInterval
 
         for chain in chains {
@@ -308,6 +309,9 @@ class GameScene: SKScene {
                 let scaleAction = SKAction.scale(to: 0.1, duration: durationScale)
                 scaleAction.timingMode = .easeOut
                 matchCookie.run(SKAction.sequence([SKAction.wait(forDuration: delay + durationMove), scaleAction, SKAction.removeFromParent()]))
+
+                longestDuration = max(longestDuration, delay + durationCombo)
+
             }
             combo += 1
             let comboLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
@@ -329,7 +333,6 @@ class GameScene: SKScene {
             playerHP = min(maxHealth, playerHP + addHp)
             updateHealthBar(node: playerHealthBar)
         }
-        let longestDuration = TimeInterval(combo - lastCombo + 1) * durationCombo
         lastCombo += chains.count
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }

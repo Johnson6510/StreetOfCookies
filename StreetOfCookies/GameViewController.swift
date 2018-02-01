@@ -151,6 +151,14 @@ class GameViewController: UIViewController {
             }
         } else if scene.playerHP == maxHealth {
             print("Next Level Open!!")
+            let chains = level.removeAllCookies()
+            scene.animateRemoveAllCookies(for: chains) {
+                self.gameOverPanel.image = UIImage(named: "LevelComplete")
+                self.showGameOver()
+                self.currentLevel = self.currentLevel < maxLevels ? self.currentLevel + 1 : 1
+
+            }
+
         }
     }
 
@@ -168,8 +176,8 @@ class GameViewController: UIViewController {
         
         gameOverPanel.isHidden = true
         scene.isUserInteractionEnabled = true
-        
-        beginGame()
+
+        setupLevel(levelNum: currentLevel)
         
         print("Re-Start Game!!")
     }
