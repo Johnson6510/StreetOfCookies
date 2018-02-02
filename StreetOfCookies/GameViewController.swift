@@ -14,6 +14,7 @@
 import UIKit
 import SpriteKit
 import AVFoundation
+import CoreData
 
 class GameViewController: UIViewController {
 
@@ -37,6 +38,10 @@ class GameViewController: UIViewController {
             return nil
         }
     }()
+    
+    // for CoreData
+    var appDelegate: AppDelegate!
+    var context: NSManagedObjectContext!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,6 +57,9 @@ class GameViewController: UIViewController {
 
         setupLevel(levelNum: currentLevel)
         backgroundMusic?.play()
+        
+        appDelegate = UIApplication.shared.delegate as! AppDelegate
+        context = appDelegate.persistentContainer.viewContext
     }
 
     override var shouldAutorotate: Bool {
@@ -87,7 +95,6 @@ class GameViewController: UIViewController {
         scene.addTiles()
         scene.swipeHandler = handleSwipe
         scene.moveDoneHandler = handleMoveDone
-
         gameOverPanel.isHidden = true
         
         view.presentScene(scene)
@@ -137,6 +144,7 @@ class GameViewController: UIViewController {
     
     func beginNextTurn() {
         view.isUserInteractionEnabled = true
+        scene.maxCombo = max(scene.maxCombo, scene.combo)
         scene.combo = 0
         scene.lastCombo = 0
         scene.totalEatCookies = 0
@@ -153,12 +161,11 @@ class GameViewController: UIViewController {
             print("Next Level Open!!")
             let chains = level.removeAllCookies()
             scene.animateRemoveAllCookies(for: chains) {
+                self.saveLevelClearInformation()
                 self.gameOverPanel.image = UIImage(named: "LevelComplete")
                 self.showGameOver()
                 self.currentLevel = self.currentLevel < maxLevels ? self.currentLevel + 1 : 1
-
             }
-
         }
     }
 
@@ -180,6 +187,45 @@ class GameViewController: UIViewController {
         setupLevel(levelNum: currentLevel)
         
         print("Re-Start Game!!")
+    }
+
+    func saveLevelClearInformation() {
+        
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: "LevelEntity")
+        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "level == %d", currentLevel)
+        request.returnsObjectsAsFaults = false
+        do {
+            let levels = try context.fetch(request)
+            print("Count", levels.count)
+            if levels.count == 1 {
+                print("Level Infornation Changed, Level: ", currentLevel)
+                let change: LevelEntity = levels.first as! LevelEntity
+                change.setValue(scene.score, forKey: "score")
+                change.setValue(scene.maxCombo, forKey: "combo")
+                change.setValue(scene.turn, forKey: "turn")
+                print("Level: ", change)
+            } else {
+                print("Level Infornation Append, Level: ", currentLevel)
+                let entity = NSEntityDescription.entity(forEntityName: "LevelEntity", in: context)
+                let new = NSManagedObject(entity: entity!, insertInto: context)
+                
+                new.setValue(currentLevel, forKey: "level")
+                new.setValue(scene.score, forKey: "score")
+                new.setValue(scene.maxCombo, forKey: "combo")
+                new.setValue(scene.turn, forKey: "turn")
+                print("Level: ", new)
+            }
+            
+        } catch {
+            print("Failed")
+        }
+
+        do {
+            try context.save()
+        } catch {
+            print("Failed saving")
+        }
     }
 
 

@@ -108,7 +108,7 @@ class Level {
                 print(string)
             }
         }
-        
+
         //建立可更動的defectMap
         for x in 0..<maxX {
             defectMap.append([CookieType]())
@@ -159,244 +159,85 @@ class Level {
                         break
                     }
                     
-                    //Center (for special case: cross, double-hori, double-vert, etc...)
+                    //Center (for special pattern: cross, double-hori, double-vert, etc...)
                     if route[route.count - 1].dir == 16 {
                         route[route.count - 1].dir = 8
                         printDebug(isDebug, "Change node: (\(route[route.count - 1].x), \(route[route.count - 1].y)) - Up")
+                        func addNode(_ x: Int, _ y: Int) {
+                            let idx = String(x) + " " + String(y)
+                            point.insert(idx)
+                            if !nodeMap[x][y] {
+                                route.append(Node(x: x, y: y, dir: 16))
+                                printDebug(isDebug, "Add node: (\(x), \(y)) - Center")
+                                nodeMap[x][y] = true
+                            }
+                        }
                         //HHH
                         //  HCH
-                        if x >= 3 && x < maxX-1 && y < maxY-1 {
-                            var idx: String
+                        if x >= 3 && y >= 0 && x < maxX-1 && y < maxY-1 {
                             if defectMap[x-1][y] == type && defectMap[x+1][y] == type && defectMap[x-3][y+1] == type && defectMap[x-2][y+1] == type && defectMap[x-1][y+1] == type {
                                 match = true
-                                idx = String(x-1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y] {
-                                    route.append(Node(x: x-1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y)) - Center")
-                                    nodeMap[x-1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
-                                idx = String(x-3) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x-3][y+1] {
-                                    route.append(Node(x: x-3, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-3), \(y+1)) - Center")
-                                    nodeMap[x-3][y+1] = true
-                                }
-                                idx = String(x-2) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x-2][y+1] {
-                                    route.append(Node(x: x-2, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-2), \(y+1)) - Center")
-                                    nodeMap[x-2][y+1] = true
-                                }
-                                idx = String(x-1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y+1] {
-                                    route.append(Node(x: x-1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y+1)) - Center")
-                                    nodeMap[x-1][y+1] = true
-                                }
+                                addNode(x - 1, y)
+                                addNode(x + 1, y)
+                                addNode(x - 3, y + 1)
+                                addNode(x - 2, y + 1)
+                                addNode(x - 1, y + 1)
                             }
                         }
                         //HHH
                         // HCH
-                        if x >= 2 && x < maxX-1 && y < maxY-1 {
-                            var idx: String
+                        if x >= 2 && y >= 0 && x < maxX-1 && y < maxY-1 {
                             if defectMap[x-1][y] == type && defectMap[x+1][y] == type && defectMap[x-2][y+1] == type && defectMap[x-1][y+1] == type && defectMap[x][y+1] == type {
                                 match = true
-                                idx = String(x-1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y] {
-                                    route.append(Node(x: x-1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y)) - Center")
-                                    nodeMap[x-1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
-                                idx = String(x-2) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x-2][y+1] {
-                                    route.append(Node(x: x-2, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-2), \(y+1)) - Center")
-                                    nodeMap[x-2][y+1] = true
-                                }
-                                idx = String(x-1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y+1] {
-                                    route.append(Node(x: x-1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y+1)) - Center")
-                                    nodeMap[x-1][y+1] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
+                                addNode(x - 1, y)
+                                addNode(x + 1, y)
+                                addNode(x - 2, y + 1)
+                                addNode(x - 1, y + 1)
+                                addNode(x    , y + 1)
                             }
                         }
                         //HHH
                         //HCH
-                        if x >= 1 && x < maxX-1 && y < maxY-1 {
-                            var idx: String
+                        if x >= 1 && y >= 0 && x < maxX-1 && y < maxY-1 {
                             if defectMap[x-1][y] == type && defectMap[x+1][y] == type && defectMap[x-1][y+1] == type && defectMap[x][y+1] == type && defectMap[x+1][y+1] == type {
                                 match = true
-                                idx = String(x-1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y] {
-                                    route.append(Node(x: x-1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y)) - Center")
-                                    nodeMap[x-1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
-                                idx = String(x-1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y+1] {
-                                    route.append(Node(x: x-1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y+1)) - Center")
-                                    nodeMap[x-1][y+1] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+1] {
-                                    route.append(Node(x: x+1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+1)) - Center")
-                                    nodeMap[x+1][y+1] = true
-                                }
+                                addNode(x - 1, y)
+                                addNode(x + 1, y)
+                                addNode(x - 1, y + 1)
+                                addNode(x    , y + 1)
+                                addNode(x + 1, y + 1)
                             }
                         }
                         // HHH
                         //HCH
-                        if x >= 1 && x < maxX-2 && y < maxY-1 {
-                            var idx: String
+                        if x >= 1 && y >= 0 && x < maxX-2 && y < maxY-1 {
                             if defectMap[x-1][y] == type && defectMap[x+1][y] == type && defectMap[x][y+1] == type && defectMap[x+1][y+1] == type && defectMap[x+2][y+1] == type {
                                 match = true
-                                idx = String(x-1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y] {
-                                    route.append(Node(x: x-1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y)) - Center")
-                                    nodeMap[x-1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+1] {
-                                    route.append(Node(x: x+1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+1)) - Center")
-                                    nodeMap[x+1][y+1] = true
-                                }
-                                idx = String(x+2) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+2][y+1] {
-                                    route.append(Node(x: x+2, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+2), \(y+1)) - Center")
-                                    nodeMap[x+2][y+1] = true
-                                }
+                                addNode(x - 1, y)
+                                addNode(x + 1, y)
+                                addNode(x    , y + 1)
+                                addNode(x + 1, y + 1)
+                                addNode(x + 2, y + 1)
                             }
                         }
                         //  HHH
                         //HCH
-                        if x >= 1 && x < maxX-3 && y < maxY-1 {
-                            var idx: String
+                        if x >= 1 && y >= 0 && x < maxX-3 && y < maxY-1 {
                             if defectMap[x-1][y] == type && defectMap[x+1][y] == type && defectMap[x+1][y+1] == type && defectMap[x+2][y+1] == type && defectMap[x+3][y+1] == type {
                                 match = true
-                                idx = String(x-1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y] {
-                                    route.append(Node(x: x-1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y)) - Center")
-                                    nodeMap[x-1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+1] {
-                                    route.append(Node(x: x+1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+1)) - Center")
-                                    nodeMap[x+1][y+1] = true
-                                }
-                                idx = String(x+2) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+2][y+1] {
-                                    route.append(Node(x: x+2, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+2), \(y+1)) - Center")
-                                    nodeMap[x+2][y+1] = true
-                                }
-                                idx = String(x+3) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+3][y+1] {
-                                    route.append(Node(x: x+3, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+3), \(y+1)) - Center")
-                                    nodeMap[x+3][y+1] = true
-                                }
+                                addNode(x - 1, y)
+                                addNode(x + 1, y)
+                                addNode(x + 1, y + 1)
+                                addNode(x + 2, y + 1)
+                                addNode(x + 3, y + 1)
                             }
                         }
                         //HCH
                         if x >= 1 && x < maxX-1 {
-                            var idx: String
                             if defectMap[x-1][y] == type && defectMap[x+1][y] == type {
                                 match = true
-                                idx = String(x-1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x-1][y] {
-                                    route.append(Node(x: x-1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x-1), \(y)) - Center")
-                                    nodeMap[x-1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
+                                addNode(x - 1, y)
+                                addNode(x + 1, y)
                             }
                         }
                         // V
@@ -404,248 +245,80 @@ class Level {
                         //VV
                         //C
                         //V
-                        if y >= 1 && y < maxY-3 && x < maxX-1 {
-                            var idx: String
+                        if x >= 0 && y >= 1 && x < maxX-1 && y < maxY-3 {
                             if defectMap[x][y-1] == type && defectMap[x][y+1] == type && defectMap[x+1][y+1] == type && defectMap[x+1][y+2] == type  && defectMap[x+1][y+3] == type {
                                 match = true
-                                idx = String(x) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x][y-1] {
-                                    route.append(Node(x: x, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y-1)) - Center")
-                                    nodeMap[x][y-1] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+1] {
-                                    route.append(Node(x: x+1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+1)) - Center")
-                                    nodeMap[x+1][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y+2)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+2] {
-                                    route.append(Node(x: x+1, y: y+2, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+2)) - Center")
-                                    nodeMap[x+1][y+2] = true
-                                }
-                                idx = String(x+1) + " " + String(y+3)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+3] {
-                                    route.append(Node(x: x+1, y: y+3, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+3)) - Center")
-                                    nodeMap[x+1][y+3] = true
-                                }
+                                addNode(x    , y - 1)
+                                addNode(x    , y + 1)
+                                addNode(x + 1, y + 1)
+                                addNode(x + 1, y + 2)
+                                addNode(x + 1, y + 3)
                             }
                         }
                         // V
                         //VV
                         //CV
                         //V
-                        if y >= 1 && y < maxY-2 && x < maxX-1 {
-                            var idx: String
+                        if x >= 0 && y >= 1 && x < maxX-1 && y < maxY-2 {
                             if defectMap[x][y-1] == type && defectMap[x][y+1] == type && defectMap[x+1][y] == type && defectMap[x+1][y+1] == type  && defectMap[x+1][y+2] == type {
                                 match = true
-                                idx = String(x) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x][y-1] {
-                                    route.append(Node(x: x, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y-1)) - Center")
-                                    nodeMap[x][y-1] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+1] {
-                                    route.append(Node(x: x+1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+1)) - Center")
-                                    nodeMap[x+1][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y+2)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+2] {
-                                    route.append(Node(x: x+1, y: y+2, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+2)) - Center")
-                                    nodeMap[x+1][y+2] = true
-                                }
+                                addNode(x    , y - 1)
+                                addNode(x    , y + 1)
+                                addNode(x + 1, y)
+                                addNode(x + 1, y + 1)
+                                addNode(x + 1, y + 2)
                             }
                         }
                         //VV
                         //CV
                         //VV
-                        if y >= 1 && y < maxY-1 && x < maxX-1 {
-                            var idx: String
+                        if x >= 0 && y >= 1 && x < maxX-1 && y < maxY-1 {
                             if defectMap[x][y-1] == type && defectMap[x][y+1] == type && defectMap[x+1][y-1] == type && defectMap[x+1][y] == type  && defectMap[x+1][y+1] == type {
                                 match = true
-                                idx = String(x) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x][y-1] {
-                                    route.append(Node(x: x, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y-1)) - Center")
-                                    nodeMap[x][y-1] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y-1] {
-                                    route.append(Node(x: x+1, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y-1)) - Center")
-                                    nodeMap[x+1][y-1] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y+1] {
-                                    route.append(Node(x: x+1, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y+1)) - Center")
-                                    nodeMap[x+1][y+1] = true
-                                }
+                                addNode(x    , y - 1)
+                                addNode(x    , y + 1)
+                                addNode(x + 1, y - 1)
+                                addNode(x + 1, y)
+                                addNode(x + 1, y + 1)
                             }
                         }
                         //V
-                        //CV
                         //VV
+                        //VC
                         // V
-                        if y >= 2 && y < maxY-1 && x < maxX-1 {
-                            var idx: String
-                            if defectMap[x][y-1] == type && defectMap[x][y+1] == type && defectMap[x+1][y] == type && defectMap[x+1][y-1] == type  && defectMap[x+1][y-2] == type {
+                        if x >= 1 && y >= 1 && x < maxX && y < maxY-2 {
+                            if defectMap[x][y-1] == type && defectMap[x][y+1] == type && defectMap[x-1][y] == type && defectMap[x-1][y+1] == type  && defectMap[x-1][y+2] == type {
                                 match = true
-                                idx = String(x) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x][y-1] {
-                                    route.append(Node(x: x, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y-1)) - Center")
-                                    nodeMap[x][y-1] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y] {
-                                    route.append(Node(x: x+1, y: y, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y)) - Center")
-                                    nodeMap[x+1][y] = true
-                                }
-                                idx = String(x+1) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y-1] {
-                                    route.append(Node(x: x+1, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y-1)) - Center")
-                                    nodeMap[x+1][y-1] = true
-                                }
-                                idx = String(x+1) + " " + String(y-2)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y-2] {
-                                    route.append(Node(x: x+1, y: y-2, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y-2)) - Center")
-                                    nodeMap[x+1][y-2] = true
-                                }
+                                addNode(x    , y - 1)
+                                addNode(x    , y + 1)
+                                addNode(x - 1, y)
+                                addNode(x - 1, y + 1)
+                                addNode(x - 1, y + 2)
                             }
                         }
+                        //
                         //V
-                        //C
                         //VV
+                        // C
                         // V
-                        // V
-                        if y >= 3 && y < maxY-1 && x < maxX-1 {
-                            var idx: String
-                            if defectMap[x][y-1] == type && defectMap[x][y+1] == type && defectMap[x+1][y-1] == type && defectMap[x+1][y-2] == type  && defectMap[x+1][y-3] == type {
+                        if x >= 1 && y >= 1 && x < maxX && y < maxY-3 {
+                            if defectMap[x][y-1] == type && defectMap[x][y+1] == type && defectMap[x-1][y+1] == type && defectMap[x-1][y+2] == type  && defectMap[x-1][y+3] == type {
                                 match = true
-                                idx = String(x) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x][y-1] {
-                                    route.append(Node(x: x, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y-1)) - Center")
-                                    nodeMap[x][y-1] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
-                                idx = String(x+1) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y-1] {
-                                    route.append(Node(x: x+1, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y-1)) - Center")
-                                    nodeMap[x+1][y-1] = true
-                                }
-                                idx = String(x+1) + " " + String(y-2)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y-2] {
-                                    route.append(Node(x: x+1, y: y-2, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y-2)) - Center")
-                                    nodeMap[x+1][y-2] = true
-                                }
-                                idx = String(x+1) + " " + String(y-3)
-                                point.insert(idx)
-                                if !nodeMap[x+1][y-3] {
-                                    route.append(Node(x: x+1, y: y-3, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x+1), \(y-3)) - Center")
-                                    nodeMap[x+1][y-3] = true
-                                }
+                                addNode(x    , y - 1)
+                                addNode(x    , y + 1)
+                                addNode(x - 1, y + 1)
+                                addNode(x - 1, y + 2)
+                                addNode(x - 1, y + 3)
                             }
                         }
                         //V
                         //C
                         //V
                         if y >= 1 && y < maxY-1 {
-                            var idx: String
                             if defectMap[x][y-1] == type && defectMap[x][y+1] == type {
                                 match = true
-                                idx = String(x) + " " + String(y-1)
-                                point.insert(idx)
-                                if !nodeMap[x][y-1] {
-                                    route.append(Node(x: x, y: y-1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y-1)) - Center")
-                                    nodeMap[x][y-1] = true
-                                }
-                                idx = String(x) + " " + String(y+1)
-                                point.insert(idx)
-                                if !nodeMap[x][y+1] {
-                                    route.append(Node(x: x, y: y+1, dir: 16))
-                                    printDebug(isDebug, "Add node: (\(x), \(y+1)) - Center")
-                                    nodeMap[x][y+1] = true
-                                }
+                                addNode(x    , y - 1)
+                                addNode(x    , y + 1)
                             }
                         }
                     }
@@ -770,8 +443,10 @@ class Level {
                         let x = Int(xy[0]) ?? 0
                         let y = Int(xy[1]) ?? 0
                         chain.add(cookie: cookies[x, y]!)
+                        printDebug(isDebug, "Match Chain: (\(x), \(y))")
                         defectMap[x][y] = CookieType.unknown
                     }
+                    printDebug(isDebug, "")
                     if chain.length != 0 {
                         set.insert(chain)
                     }

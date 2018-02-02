@@ -6,21 +6,32 @@
 //  Copyright © 2018年 黃健偉. All rights reserved.
 //
 
+// need to add:
+// icon & Luanch Screen
+// show level, record pass level and select level
+// hp sereen update too slow
+// turn animate [move vector up -> change turn -> move vector down]
+// change finish animate and sound (now same as game over)
+//
+
 import SpriteKit
 import AVFoundation
 
 class GameScene: SKScene {
     var level: Level!
     
-    let tileWidth: CGFloat = 32 * 1.8
-    let tileHeight: CGFloat = 36 * 1.8
-    
+    var tileWidth: CGFloat = 32 * 1.8
+    var tileHeight: CGFloat = 36 * 1.8
+    var iPadScale: CGFloat = 1
+
     let gameLayer = SKNode()
     let cookiesLayer = SKNode()
     let tilesLayer = SKNode()
     
     var playerHP: Int = 0
-    let playerHealthBar = SKSpriteNode()
+    var healthBarHp: Int = 0
+    let healthBar = SKSpriteNode()
+    var lastUpdateTime: TimeInterval = 0
 
     var moveTime: Double = 0
     let timerBar = SKSpriteNode()
@@ -31,8 +42,11 @@ class GameScene: SKScene {
 
     var combo: Int = 0
     var lastCombo: Int = 0
+    var maxCombo: Int = 0
     var totalEatCookies: Int = 0
 
+    var score: Int = 0
+    
     private var swipeFromX: Int?
     private var swipeFromY: Int?
     private var oriX = -1
@@ -58,6 +72,13 @@ class GameScene: SKScene {
     override init(size: CGSize) {
         super.init(size: size)
 
+        //change size for iPad
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            iPadScale = 1.5
+        }
+        tileWidth *= iPadScale
+        tileHeight *= iPadScale
+
         swipeFromX = nil
         swipeFromY = nil
 
@@ -77,21 +98,24 @@ class GameScene: SKScene {
         cookiesLayer.position = layerPosition
         gameLayer.addChild(cookiesLayer)
 
-        playerHealthBar.position = CGPoint(x: 0, y: 280)
-        gameLayer.addChild(playerHealthBar)
+        healthBar.position = CGPoint(x: 0, y: 280 * iPadScale)
+        gameLayer.addChild(healthBar)
 
-        timerBar.position = CGPoint(x: 0, y: 268)
+        timerBar.position = CGPoint(x: 0, y: 268 * iPadScale)
         gameLayer.addChild(timerBar)
         timer = Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(advanceTimer), userInfo: nil, repeats: true)
         
         turn = 0
+        score = 0
+        maxCombo = 0
+        healthBarHp = 0
         
         //view -+- background
         //      +- gameLayer -+- tilesLayer -+- tileNode(x*y)
         //                    |
         //                    +- cookiesLayer -+- cookieNode(x*y)
         //                    |
-        //                    +- playerHealthBar
+        //                    +- healthBar
         //                    +- timerBar
         //
     }
@@ -202,10 +226,30 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
         animateTurn()
-        updateHealthBar(node: playerHealthBar)
         updateTimerBar(node: timerBar)
     }
 
+    override func didEvaluateActions() {
+        let scale = 10
+        if healthBarHp != playerHP {
+            if healthBarHp > playerHP {
+                if healthBarHp - playerHP > scale {
+                    healthBarHp -= scale
+                } else {
+                    healthBarHp = playerHP
+                }
+            } else {
+                if playerHP - healthBarHp > scale {
+                    healthBarHp += scale
+                } else {
+                    healthBarHp = playerHP
+                }
+            }
+        }
+        updateHealthBar(node: healthBar)
+    }
+
+    
     func addTiles() {
         for y in 0..<maxY {
             for x in 0..<maxX{
@@ -248,6 +292,7 @@ class GameScene: SKScene {
         if let sprite = cookie.sprite {
             let texture = SKTexture(imageNamed: cookie.cookieType.cookieName)
             selectionSprite.size = CGSize(width: tileWidth * 1.5, height: tileHeight * 1.5)
+            selectionSprite.zPosition = 300
             selectionSprite.run(SKAction.sequence([SKAction.setTexture(texture), SKAction.fadeIn(withDuration: 0.1)]))
             
             sprite.addChild(selectionSprite)
@@ -315,14 +360,19 @@ class GameScene: SKScene {
             }
             combo += 1
             let comboLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
-            comboLabel.fontSize = 50
+            comboLabel.fontSize = 50 * iPadScale
             comboLabel.fontColor = SKColor.magenta
             comboLabel.text = "Combo  \(combo)"
-            comboLabel.position = CGPoint(x: (view?.bounds.width)! / 2, y: (view?.bounds.height)! / 2 - 50)
+            comboLabel.horizontalAlignmentMode = .center
+            comboLabel.verticalAlignmentMode = .center
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                comboLabel.position = CGPoint(x: (self.view?.center.x)! / iPadScale, y: (self.view?.center.y)! / iPadScale)
+            } else {
+                comboLabel.position = CGPoint(x: (self.view?.center.x)! - 20, y: (self.view?.center.y)! - 50)
+            }
             comboLabel.zPosition = 300
             comboLabel.isHidden = true
             cookiesLayer.addChild(comboLabel)
-            
             let comboAction = SKAction.move(by: CGVector(dx: 0, dy: 50), duration: durationCombo)
             comboAction.timingMode = .easeOut
 
@@ -331,7 +381,9 @@ class GameScene: SKScene {
             totalEatCookies += chain.cookies.count
             let addHp = (2 + combo) * totalEatCookies
             playerHP = min(maxHealth, playerHP + addHp)
-            updateHealthBar(node: playerHealthBar)
+            //repeat {
+            //    didEvaluateActions()
+            //} while playerHP != healthBarHp
         }
         lastCombo += chains.count
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
@@ -425,10 +477,10 @@ class GameScene: SKScene {
             turnLabel?.removeFromParent()
         }
         turnLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
-        turnLabel?.fontSize = 20
+        turnLabel?.fontSize = 20 * iPadScale
         turnLabel?.fontColor = SKColor.blue
         turnLabel?.text = "Turn \(turn)"
-        turnLabel?.position = CGPoint(x: 280, y: 560)
+        turnLabel?.position = CGPoint(x: 280 * iPadScale, y: 560 * iPadScale)
         turnLabel?.zPosition = 300
         tilesLayer.addChild(turnLabel!)
         
@@ -437,7 +489,7 @@ class GameScene: SKScene {
         turnLabel?.run(moveAction)
     }
     
-    func updateHealthBar(node: SKSpriteNode) {
+    func updateHealthBar(node: SKSpriteNode) {//}, completion: @escaping () -> ()) {
         let healthBarWidth: CGFloat = tileWidth * CGFloat(maxX)
         let healthBarHeight: CGFloat = 20
         
@@ -461,7 +513,7 @@ class GameScene: SKScene {
         
         // draw the health bar with a colored rectangle
         fillColor.setFill()
-        let barWidth = (barSize.width - 1) * CGFloat(playerHP) / CGFloat(maxHealth)
+        let barWidth = (barSize.width - 1) * CGFloat(healthBarHp) / CGFloat(maxHealth)
         let barRect = CGRect(x: 0.5, y: 0.5, width: barWidth, height: barSize.height - 1)
         context!.fill(barRect)
         
@@ -473,7 +525,7 @@ class GameScene: SKScene {
         node.texture = SKTexture(image: spriteImage!)
         node.size = barSize
         
-        let action = SKAction.fadeIn(withDuration: 0.5)
+        let action = SKAction.fadeIn(withDuration: 0.01)
         node.run(action)
     }
 

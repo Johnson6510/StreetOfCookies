@@ -28,6 +28,7 @@
 		BD4FB960201D64DA000E4894 /* Ka-Ching.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95A201D64D8000E4894 /* Ka-Ching.wav */; };
 		BD4FB961201D64DA000E4894 /* Drip.wav in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95B201D64D8000E4894 /* Drip.wav */; };
 		BD4FB962201D64DA000E4894 /* Mining by Moonlight.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BD4FB95C201D64D9000E4894 /* Mining by Moonlight.mp3 */; };
+		BD7C79F92023058400DE25B8 /* StreetOfCookies.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = BD7C79F72023058400DE25B8 /* StreetOfCookies.xcdatamodeld */; };
 		BDF5D560201E3ED700EA32C3 /* Level_5.json in Resources */ = {isa = PBXBuildFile; fileRef = BDF5D55F201E3ED700EA32C3 /* Level_5.json */; };
 		BDF5D562201E3F1B00EA32C3 /* Level_6.json in Resources */ = {isa = PBXBuildFile; fileRef = BDF5D561201E3F1B00EA32C3 /* Level_6.json */; };
 		BDF5D564201E3F3F00EA32C3 /* Level_7.json in Resources */ = {isa = PBXBuildFile; fileRef = BDF5D563201E3F3F00EA32C3 /* Level_7.json */; };
@@ -59,6 +60,7 @@
 		BD4FB95A201D64D8000E4894 /* Ka-Ching.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Ka-Ching.wav"; sourceTree = "<group>"; };
 		BD4FB95B201D64D8000E4894 /* Drip.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Drip.wav; sourceTree = "<group>"; };
 		BD4FB95C201D64D9000E4894 /* Mining by Moonlight.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "Mining by Moonlight.mp3"; sourceTree = "<group>"; };
+		BD7C79F82023058400DE25B8 /* StreetOfCookies.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = StreetOfCookies.xcdatamodel; sourceTree = "<group>"; };
 		BDF5D55F201E3ED700EA32C3 /* Level_5.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_5.json; sourceTree = "<group>"; };
 		BDF5D561201E3F1B00EA32C3 /* Level_6.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_6.json; sourceTree = "<group>"; };
 		BDF5D563201E3F3F00EA32C3 /* Level_7.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Level_7.json; sourceTree = "<group>"; };
@@ -103,6 +105,7 @@
 				BD1C1DD4201C23C800FFE4F2 /* Level */,
 				BD089FEA201B5CF600B6EECC /* Assets.xcassets */,
 				BD4FB963201D64E6000E4894 /* Sounds */,
+				BD7C79F72023058400DE25B8 /* StreetOfCookies.xcdatamodeld */,
 				BD089FE7201B5CF600B6EECC /* Main.storyboard */,
 				BD089FEC201B5CF600B6EECC /* LaunchScreen.storyboard */,
 				BD089FEF201B5CF600B6EECC /* Info.plist */,
@@ -245,6 +248,7 @@
 				BD089FF8201B64D800B6EECC /* Cookie.swift in Sources */,
 				BD4FB956201CF222000E4894 /* Chain.swift in Sources */,
 				BD089FE6201B5CF600B6EECC /* GameViewController.swift in Sources */,
+				BD7C79F92023058400DE25B8 /* StreetOfCookies.xcdatamodeld in Sources */,
 				BD089FDE201B5CF600B6EECC /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -430,6 +434,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		BD7C79F72023058400DE25B8 /* StreetOfCookies.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				BD7C79F82023058400DE25B8 /* StreetOfCookies.xcdatamodel */,
+			);
+			currentVersion = BD7C79F82023058400DE25B8 /* StreetOfCookies.xcdatamodel */;
+			path = StreetOfCookies.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = BD089FD2201B5CF600B6EECC /* Project object */;
 }
