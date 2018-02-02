@@ -96,6 +96,7 @@ class GameViewController: UIViewController {
         scene.swipeHandler = handleSwipe
         scene.moveDoneHandler = handleMoveDone
         gameOverPanel.isHidden = true
+        scene.animateLevel(levelNum)
         
         view.presentScene(scene)
         beginGame()
@@ -153,14 +154,14 @@ class GameViewController: UIViewController {
         if scene.playerHP == 0 {
             print("Game Over!!")
             let chains = level.removeAllCookies()
-            scene.animateRemoveAllCookies(for: chains) {
+            scene.animateRemoveAllCookiesAtDie(for: chains) {
                 self.gameOverPanel.image = UIImage(named: "GameOver")
                 self.showGameOver()
             }
         } else if scene.playerHP == maxHealth {
             print("Next Level Open!!")
             let chains = level.removeAllCookies()
-            scene.animateRemoveAllCookies(for: chains) {
+            scene.animateRemoveAllCookiesAtFinish(for: chains) {
                 self.saveLevelClearInformation()
                 self.gameOverPanel.image = UIImage(named: "LevelComplete")
                 self.showGameOver()

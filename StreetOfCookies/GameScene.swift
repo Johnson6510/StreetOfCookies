@@ -8,8 +8,7 @@
 
 // need to add:
 // icon & Luanch Screen
-// show level, record pass level and select level
-// hp sereen update too slow
+// show level, select level from
 // turn animate [move vector up -> change turn -> move vector down]
 // change finish animate and sound (now same as game over)
 //
@@ -46,7 +45,10 @@ class GameScene: SKScene {
     var totalEatCookies: Int = 0
 
     var score: Int = 0
-    
+    var scoreLabel: SKLabelNode? = nil
+
+    var LevelLabel: SKLabelNode? = nil
+
     private var swipeFromX: Int?
     private var swipeFromY: Int?
     private var oriX = -1
@@ -60,10 +62,11 @@ class GameScene: SKScene {
     var moveDoneHandler: (() -> ())?
 
     // Pre-load sounds
-    let scrapeSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false)
-    let chompSound = SKAction.playSoundFileNamed("Chomp.wav", waitForCompletion: false)
-    let dripSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false)
-    let kaChingSound = SKAction.playSoundFileNamed("Ka-Ching.wav", waitForCompletion: false)
+    let scrapeSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false) //移動
+    let chompSound = SKAction.playSoundFileNamed("Chomp.wav", waitForCompletion: false) //消珠
+    let dripSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false) //落珠
+    let kaChingSound = SKAction.playSoundFileNamed("Ka-Ching.wav", waitForCompletion: false) //死亡一次肖消排珠
+    let MusicUpSound = SKAction.playSoundFileNamed("Music_up.wav", waitForCompletion: false) //過關
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder) is not used in this app")
@@ -195,6 +198,11 @@ class GameScene: SKScene {
                 trySwap(horizontal: horzDelta, vertical: vertDelta)
                 swipeFromX = oriX
                 swipeFromY = oriY
+                if !isMoved {
+                    playerHP = max(0, playerHP - 100)
+                    turn += 1
+                    animateTurn()
+                }
                 isMoved = true
             }
         }
@@ -205,11 +213,6 @@ class GameScene: SKScene {
             hideSelectionIndicator()
         }
         if swipeFromX != nil && swipeFromY != nil {
-            if isMoved {
-                playerHP = max(0, playerHP - 100)
-                turn += 1
-                animateTurn()
-            }
             if let handler = moveDoneHandler {
                 handler()
                 isMoved = false
@@ -226,6 +229,7 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
         animateTurn()
+        animateScore()
         updateTimerBar(node: timerBar)
     }
 
@@ -356,7 +360,6 @@ class GameScene: SKScene {
                 matchCookie.run(SKAction.sequence([SKAction.wait(forDuration: delay + durationMove), scaleAction, SKAction.removeFromParent()]))
 
                 longestDuration = max(longestDuration, delay + durationCombo)
-
             }
             combo += 1
             let comboLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
@@ -381,9 +384,8 @@ class GameScene: SKScene {
             totalEatCookies += chain.cookies.count
             let addHp = (2 + combo) * totalEatCookies
             playerHP = min(maxHealth, playerHP + addHp)
-            //repeat {
-            //    didEvaluateActions()
-            //} while playerHP != healthBarHp
+            
+            score += 60 * (chain.cookies.count - 2)
         }
         lastCombo += chains.count
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
@@ -429,7 +431,7 @@ class GameScene: SKScene {
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
     
-    func animateRemoveAllCookies(for chains: Set<Chain>, completion: @escaping () -> ()) {
+    func animateRemoveAllCookiesAtDie(for chains: Set<Chain>, completion: @escaping () -> ()) {
         var longestDuration: TimeInterval = 0
         for chain in chains {
             for cookie in chain.cookies {
@@ -472,6 +474,36 @@ class GameScene: SKScene {
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
 
+    func animateRemoveAllCookiesAtFinish(for chains: Set<Chain>, completion: @escaping () -> ()) {
+        run(MusicUpSound)
+
+        var longestDuration: TimeInterval = 0
+        for chain in chains {
+            for cookie in chain.cookies.reversed() {
+                let removeCookie = cookie.sprite!
+                
+                var totalDuration: TimeInterval = 0
+                var duration: TimeInterval
+                
+                duration = TimeInterval(maxY - cookie.y) * 0.15
+                totalDuration = totalDuration + duration
+                let newPosition = pointFor(x: cookie.x, y: maxY - 1)
+                let moveAction = SKAction.move(to: newPosition, duration: duration)
+                moveAction.timingMode = .easeIn
+                removeCookie.run(SKAction.sequence([SKAction.wait(forDuration: totalDuration), moveAction]))
+                
+                duration = TimeInterval(maxY - cookie.y) * 0.10
+                totalDuration = totalDuration + duration
+                let scaleAction = SKAction.scale(to: 0.1, duration: duration)
+                scaleAction.timingMode = .easeIn
+                removeCookie.run(SKAction.sequence([SKAction.wait(forDuration: totalDuration), scaleAction, SKAction.removeFromParent()]))
+                
+                longestDuration = max(longestDuration, totalDuration)
+            }
+        }
+        run(SKAction.wait(forDuration: longestDuration), completion: completion)
+    }
+
     func animateTurn() {
         if turnLabel != nil {
             turnLabel?.removeFromParent()
@@ -480,7 +512,7 @@ class GameScene: SKScene {
         turnLabel?.fontSize = 20 * iPadScale
         turnLabel?.fontColor = SKColor.blue
         turnLabel?.text = "Turn \(turn)"
-        turnLabel?.position = CGPoint(x: 280 * iPadScale, y: 560 * iPadScale)
+        turnLabel?.position = CGPoint(x: (tileWidth) * CGFloat(maxX-1) * iPadScale, y: 560 * iPadScale)
         turnLabel?.zPosition = 300
         tilesLayer.addChild(turnLabel!)
         
@@ -488,6 +520,41 @@ class GameScene: SKScene {
         moveAction.timingMode = .easeOut
         turnLabel?.run(moveAction)
     }
+
+    func animateScore() {        
+        if scoreLabel != nil {
+            scoreLabel?.removeFromParent()
+        }
+        scoreLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
+        scoreLabel?.fontSize = 20 * iPadScale
+        scoreLabel?.fontColor = UIColor(red: 0.0, green: 0.8, blue: 0.0, alpha:1)
+        scoreLabel?.text = String(format: "%ld", score)
+        scoreLabel?.position = CGPoint(x: (tileWidth) * CGFloat(maxX/2) * iPadScale, y: 560 * iPadScale)
+        scoreLabel?.zPosition = 300
+        tilesLayer.addChild(scoreLabel!)
+
+        let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 3), duration: 0.7)
+        moveAction.timingMode = .easeOut
+        scoreLabel?.run(moveAction)
+    }
+    
+    func animateLevel(_ level: Int) {
+        if LevelLabel != nil {
+            LevelLabel?.removeFromParent()
+        }
+        LevelLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
+        LevelLabel?.fontSize = 20 * iPadScale
+        LevelLabel?.fontColor = SKColor.blue
+        LevelLabel?.text = String(format: "Level_%ld", level + 1)
+        LevelLabel?.position = CGPoint(x: (tileWidth) * CGFloat(1) * iPadScale, y: 560 * iPadScale)
+        LevelLabel?.zPosition = 300
+        tilesLayer.addChild(LevelLabel!)
+        
+        let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 3), duration: 0.7)
+        moveAction.timingMode = .easeOut
+        LevelLabel?.run(moveAction)
+    }
+
     
     func updateHealthBar(node: SKSpriteNode) {//}, completion: @escaping () -> ()) {
         let healthBarWidth: CGFloat = tileWidth * CGFloat(maxX)
@@ -525,7 +592,7 @@ class GameScene: SKScene {
         node.texture = SKTexture(image: spriteImage!)
         node.size = barSize
         
-        let action = SKAction.fadeIn(withDuration: 0.01)
+        let action = SKAction.fadeIn(withDuration: 0.5)
         node.run(action)
     }
 
