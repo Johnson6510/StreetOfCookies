@@ -8,9 +8,8 @@
 
 // need to add:
 // icon & Luanch Screen
-// show level, select level from
+// select level
 // turn animate [move vector up -> change turn -> move vector down]
-// change finish animate and sound (now same as game over)
 //
 
 import SpriteKit
@@ -19,22 +18,23 @@ import AVFoundation
 class GameScene: SKScene {
     var level: Level!
     
-    var tileWidth: CGFloat = 32 * 1.8
-    var tileHeight: CGFloat = 36 * 1.8
-    var iPadScale: CGFloat = 1
+    var tileWidth: CGFloat = 32
+    var tileHeight: CGFloat = 36
 
     let gameLayer = SKNode()
     let cookiesLayer = SKNode()
     let tilesLayer = SKNode()
     
+    var moveTime: Double = 0
+    let timerBar = SKSpriteNode()
+    var timerBarHeight: CGFloat = 5
+    weak var timer: Timer?
+
     var playerHP: Int = 0
     var healthBarHp: Int = 0
     let healthBar = SKSpriteNode()
+    var healthBarHeight: CGFloat = 20
     var lastUpdateTime: TimeInterval = 0
-
-    var moveTime: Double = 0
-    let timerBar = SKSpriteNode()
-    weak var timer: Timer?
 
     var turn: Int = 0
     var turnLabel: SKLabelNode? = nil
@@ -47,7 +47,8 @@ class GameScene: SKScene {
     var score: Int = 0
     var scoreLabel: SKLabelNode? = nil
 
-    var LevelLabel: SKLabelNode? = nil
+    var levelLabel: SKLabelNode!
+    var levelButton: SKButton!
 
     private var swipeFromX: Int?
     private var swipeFromY: Int?
@@ -57,16 +58,17 @@ class GameScene: SKScene {
     private var isMoved = false
 
     var selectionSprite = SKSpriteNode()
-
+    
     var swipeHandler: ((Swap) -> ())?
     var moveDoneHandler: (() -> ())?
+    var gameRoomHandler: (() -> ())?
 
     // Pre-load sounds
     let scrapeSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false) //移動
     let chompSound = SKAction.playSoundFileNamed("Chomp.wav", waitForCompletion: false) //消珠
     let dripSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false) //落珠
-    let kaChingSound = SKAction.playSoundFileNamed("Ka-Ching.wav", waitForCompletion: false) //死亡一次肖消排珠
-    let MusicUpSound = SKAction.playSoundFileNamed("Music_up.wav", waitForCompletion: false) //過關
+    let kaChingSound = SKAction.playSoundFileNamed("Ka-Ching.wav", waitForCompletion: false) //死亡一次消一排珠
+    let MusicUpSound = SKAction.playSoundFileNamed("Music-Up.wav", waitForCompletion: false) //過關
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder) is not used in this app")
@@ -75,12 +77,8 @@ class GameScene: SKScene {
     override init(size: CGSize) {
         super.init(size: size)
 
-        //change size for iPad
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            iPadScale = 1.5
-        }
-        tileWidth *= iPadScale
-        tileHeight *= iPadScale
+        tileHeight = size.height / 12
+        tileWidth = tileHeight / 36 * 32
 
         swipeFromX = nil
         swipeFromY = nil
@@ -101,13 +99,15 @@ class GameScene: SKScene {
         cookiesLayer.position = layerPosition
         gameLayer.addChild(cookiesLayer)
 
-        healthBar.position = CGPoint(x: 0, y: 280 * iPadScale)
-        gameLayer.addChild(healthBar)
-
-        timerBar.position = CGPoint(x: 0, y: 268 * iPadScale)
+        timerBarHeight = tileHeight * 0.14
+        timerBar.position = CGPoint(x: 0, y: tileHeight * 4.14)
         gameLayer.addChild(timerBar)
         timer = Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(advanceTimer), userInfo: nil, repeats: true)
-        
+
+        healthBarHeight = tileHeight * 0.4
+        healthBar.position = CGPoint(x: 0, y: tileHeight * 4.4)
+        gameLayer.addChild(healthBar)
+
         turn = 0
         score = 0
         maxCombo = 0
@@ -120,6 +120,10 @@ class GameScene: SKScene {
         //                    |
         //                    +- healthBar
         //                    +- timerBar
+        //                    |
+        //                    +- scoreLabel
+        //                    +- turnLabel
+        //                    +- levelLabel -+- levelButton
         //
     }
     
@@ -129,7 +133,7 @@ class GameScene: SKScene {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
-        let location = touch.location(in: cookiesLayer)
+        var location = touch.location(in: cookiesLayer)
         let (success, x, y) = convertPoint(location)
         if success {
             if let cookie = level.cookieAt(x: x, y: y) {
@@ -141,12 +145,20 @@ class GameScene: SKScene {
             }
         }
         isMoved = false
+        
+        //for levelButton
+        location = touch.location(in: gameLayer)
+        if levelLabel.contains(location) {
+            levelButton.activeButton.isHidden = false
+        } else {
+            levelButton.activeButton.isHidden = true
+        }
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard swipeFromX != nil && swipeFromY != nil else { return }
         guard let touch = touches.first else { return }
-        let location = touch.location(in: cookiesLayer)
+        var location = touch.location(in: cookiesLayer)
         let (success, x, y) = convertPoint(location)
         if success {
             var horzDelta = 0
@@ -206,6 +218,14 @@ class GameScene: SKScene {
                 isMoved = true
             }
         }
+        
+        //for levelButton
+        location = touch.location(in: gameLayer)
+        if levelLabel.contains(location) {
+            levelButton.activeButton.isHidden = false
+        } else {
+            levelButton.activeButton.isHidden = true
+        }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -220,6 +240,15 @@ class GameScene: SKScene {
             swipeFromX = nil
             swipeFromY = nil
         }
+        
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: self)
+        
+        //for levelButton
+        if levelLabel.contains(location) {
+            levelButton.actionFunc(0)
+        }
+        levelButton.activeButton.isHidden = true
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -363,19 +392,15 @@ class GameScene: SKScene {
             }
             combo += 1
             let comboLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
-            comboLabel.fontSize = 50 * iPadScale
+            comboLabel.fontSize = tileHeight
             comboLabel.fontColor = SKColor.magenta
             comboLabel.text = "Combo  \(combo)"
             comboLabel.horizontalAlignmentMode = .center
             comboLabel.verticalAlignmentMode = .center
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                comboLabel.position = CGPoint(x: (self.view?.center.x)! / iPadScale, y: (self.view?.center.y)! / iPadScale)
-            } else {
-                comboLabel.position = CGPoint(x: (self.view?.center.x)! - 20, y: (self.view?.center.y)! - 50)
-            }
+            comboLabel.position = CGPoint(x: 0, y: 0)
             comboLabel.zPosition = 300
             comboLabel.isHidden = true
-            cookiesLayer.addChild(comboLabel)
+            gameLayer.addChild(comboLabel)
             let comboAction = SKAction.move(by: CGVector(dx: 0, dy: 50), duration: durationCombo)
             comboAction.timingMode = .easeOut
 
@@ -503,18 +528,29 @@ class GameScene: SKScene {
         }
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
+    
+    func animateBeginGame(_ completion: @escaping () -> ()) {
+        let action = SKAction.fadeIn(withDuration: 2.0)
+        gameLayer.run(action, completion: completion)
+    }
+    
+    func animateGameOver(_ completion: @escaping () -> ()) {
+        let action = SKAction.fadeOut(withDuration: 1.0)
+        gameLayer.run(action, completion: completion)
+    }
 
     func animateTurn() {
         if turnLabel != nil {
             turnLabel?.removeFromParent()
         }
         turnLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
-        turnLabel?.fontSize = 20 * iPadScale
+        turnLabel?.verticalAlignmentMode = .center
+        turnLabel?.fontSize = tileHeight * 0.4
         turnLabel?.fontColor = SKColor.blue
         turnLabel?.text = "Turn \(turn)"
-        turnLabel?.position = CGPoint(x: (tileWidth) * CGFloat(maxX-1) * iPadScale, y: 560 * iPadScale)
+        turnLabel?.position = CGPoint(x: tileWidth * 2.2, y: tileHeight * 5)
         turnLabel?.zPosition = 300
-        tilesLayer.addChild(turnLabel!)
+        gameLayer.addChild(turnLabel!)
         
         let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 3), duration: 0.7)
         moveAction.timingMode = .easeOut
@@ -526,41 +562,76 @@ class GameScene: SKScene {
             scoreLabel?.removeFromParent()
         }
         scoreLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
-        scoreLabel?.fontSize = 20 * iPadScale
+        scoreLabel?.verticalAlignmentMode = .center
+        scoreLabel?.fontSize = tileHeight * 0.4
         scoreLabel?.fontColor = UIColor(red: 0.0, green: 0.8, blue: 0.0, alpha:1)
         scoreLabel?.text = String(format: "%ld", score)
-        scoreLabel?.position = CGPoint(x: (tileWidth) * CGFloat(maxX/2) * iPadScale, y: 560 * iPadScale)
+        scoreLabel?.position = CGPoint(x: 0, y:  tileHeight * 5)
         scoreLabel?.zPosition = 300
-        tilesLayer.addChild(scoreLabel!)
-
-        let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 3), duration: 0.7)
-        moveAction.timingMode = .easeOut
-        scoreLabel?.run(moveAction)
+        gameLayer.addChild(scoreLabel!)
     }
     
-    func animateLevel(_ level: Int) {
-        if LevelLabel != nil {
-            LevelLabel?.removeFromParent()
+    func showLevel(_ level: Int) {
+        levelLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
+        levelLabel.verticalAlignmentMode = .center
+        levelLabel?.fontSize = tileHeight * 0.4
+        levelLabel?.fontColor = SKColor.white
+        levelLabel?.position = CGPoint(x: tileWidth * -2.2, y: tileHeight * 5)
+        levelLabel?.zPosition = 300
+        levelLabel?.text = String(format: "Lv %ld", level + 1)
+        gameLayer.addChild(levelLabel)
+
+        let size = CGSize(width: tileWidth * 1.5, height: tileHeight * 0.5)
+        levelButton = SKButton(defaultImage: "Button", activeImage: "ButtonActive", size: size, action: loadLevelSelect)
+        levelLabel.addChild(levelButton)
+    }
+    
+    func loadLevelSelect(_: Int) {
+        print("Load Level Select")
+        if let handler = gameRoomHandler {
+            handler()
+            isMoved = false
         }
-        LevelLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
-        LevelLabel?.fontSize = 20 * iPadScale
-        LevelLabel?.fontColor = SKColor.blue
-        LevelLabel?.text = String(format: "Level_%ld", level + 1)
-        LevelLabel?.position = CGPoint(x: (tileWidth) * CGFloat(1) * iPadScale, y: 560 * iPadScale)
-        LevelLabel?.zPosition = 300
-        tilesLayer.addChild(LevelLabel!)
+    }
+    
+    func updateTimerBar(node: SKSpriteNode) {
+        let timerBarWidth: CGFloat = tileWidth * CGFloat(maxX)
+        //let timerBarHeight: CGFloat = 5
         
-        let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 3), duration: 0.7)
-        moveAction.timingMode = .easeOut
-        LevelLabel?.run(moveAction)
+        let barSize = CGSize(width: timerBarWidth, height: timerBarHeight)
+        
+        let fillColor = UIColor(red: 113.0/255, green: 202.0/255, blue: 53.0/255, alpha:1)
+        let borderColor = UIColor(red: 35.0/255, green: 28.0/255, blue: 40.0/255, alpha:1)
+        
+        // create drawing context
+        UIGraphicsBeginImageContextWithOptions(barSize, false, 0)
+        let context = UIGraphicsGetCurrentContext()
+        
+        // draw the outline for the health bar
+        borderColor.setStroke()
+        let borderRect = CGRect(origin: .zero, size: barSize)
+        context!.stroke(borderRect, width: 1)
+        
+        // draw the health bar with a colored rectangle
+        fillColor.setFill()
+        let barWidth = (barSize.width - 1) * CGFloat(moveTime) / CGFloat(level.moveTime)
+        let barRect = CGRect(x: 0.5, y: 0.5, width: barWidth, height: barSize.height - 1)
+        context!.fill(barRect)
+        
+        // extract image
+        let spriteImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        // set sprite texture and size
+        node.texture = SKTexture(image: spriteImage!)
+        node.size = barSize
     }
 
-    
     func updateHealthBar(node: SKSpriteNode) {//}, completion: @escaping () -> ()) {
         let healthBarWidth: CGFloat = tileWidth * CGFloat(maxX)
-        let healthBarHeight: CGFloat = 20
+        //let healthBarHeight: CGFloat = 20
         
-        let barSize = CGSize(width: healthBarWidth, height: healthBarHeight);
+        let barSize = CGSize(width: healthBarWidth, height: healthBarHeight)
         
         //255, 0, 0 -> red (hp = 0%)
         //125, 0 , 0 -> orange (hp = 50%)
@@ -594,39 +665,6 @@ class GameScene: SKScene {
         
         let action = SKAction.fadeIn(withDuration: 0.5)
         node.run(action)
-    }
-
-    func updateTimerBar(node: SKSpriteNode) {
-        let timerBarWidth: CGFloat = tileWidth * CGFloat(maxX)
-        let timerBarHeight: CGFloat = 5
-        
-        let barSize = CGSize(width: timerBarWidth, height: timerBarHeight);
-        
-        let fillColor = UIColor(red: 113.0/255, green: 202.0/255, blue: 53.0/255, alpha:1)
-        let borderColor = UIColor(red: 35.0/255, green: 28.0/255, blue: 40.0/255, alpha:1)
-        
-        // create drawing context
-        UIGraphicsBeginImageContextWithOptions(barSize, false, 0)
-        let context = UIGraphicsGetCurrentContext()
-        
-        // draw the outline for the health bar
-        borderColor.setStroke()
-        let borderRect = CGRect(origin: .zero, size: barSize)
-        context!.stroke(borderRect, width: 1)
-        
-        // draw the health bar with a colored rectangle
-        fillColor.setFill()
-        let barWidth = (barSize.width - 1) * CGFloat(moveTime) / CGFloat(level.moveTime)
-        let barRect = CGRect(x: 0.5, y: 0.5, width: barWidth, height: barSize.height - 1)
-        context!.fill(barRect)
-        
-        // extract image
-        let spriteImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        // set sprite texture and size
-        node.texture = SKTexture(image: spriteImage!)
-        node.size = barSize
     }
 
     @objc func advanceTimer() {

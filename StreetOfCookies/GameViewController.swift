@@ -14,11 +14,11 @@
 import UIKit
 import SpriteKit
 import AVFoundation
-import CoreData
 
 class GameViewController: UIViewController {
 
     var scene: GameScene!
+    var roomScene: GameRoomScene!
     var level: Level!
     
     var currentLevel = 0
@@ -39,10 +39,6 @@ class GameViewController: UIViewController {
         }
     }()
     
-    // for CoreData
-    var appDelegate: AppDelegate!
-    var context: NSManagedObjectContext!
-
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -51,15 +47,13 @@ class GameViewController: UIViewController {
             view.showsNodeCount = true
         }
         
-        gameOverPanel = UIImageView(frame: CGRect(x: 0, y: (view.bounds.size.height - 225) / 2, width: view.bounds.size.width, height: 225))
+        //960 x 450
+        gameOverPanel = UIImageView(frame: CGRect(x: 0, y: (view.bounds.size.height - view.bounds.size.width / 96 * 45) / 2, width: view.bounds.size.width, height: view.bounds.size.width / 96 * 45))
         view.addSubview(gameOverPanel)
         gameOverPanel.isHidden = true
 
         setupLevel(levelNum: currentLevel)
-        backgroundMusic?.play()
-        
-        appDelegate = UIApplication.shared.delegate as! AppDelegate
-        context = appDelegate.persistentContainer.viewContext
+        backgroundMusic?.play()        
     }
 
     override var shouldAutorotate: Bool {
@@ -95,8 +89,31 @@ class GameViewController: UIViewController {
         scene.addTiles()
         scene.swipeHandler = handleSwipe
         scene.moveDoneHandler = handleMoveDone
+        scene.gameRoomHandler = handleGameRoom
         gameOverPanel.isHidden = true
-        scene.animateLevel(levelNum)
+        scene.showLevel(levelNum)
+        
+        view.presentScene(scene)
+        beginGame()
+    }
+    
+    func handleChangeLevel(_ levelNum: Int) {
+        let view = self.view as! SKView
+        view.isMultipleTouchEnabled = false
+        
+        scene = GameScene(size: view.bounds.size)
+        scene.scaleMode = .aspectFill
+        
+        //let levelNum = roomScene.selectLevel
+        print("Load Level", levelNum + 1)
+        level = Level(filename: "Level_\(levelNum + 1)")
+        scene.level = level
+        scene.addTiles()
+        scene.swipeHandler = handleSwipe
+        scene.moveDoneHandler = handleMoveDone
+        scene.gameRoomHandler = handleGameRoom
+        gameOverPanel.isHidden = true
+        scene.showLevel(levelNum)
         
         view.presentScene(scene)
         beginGame()
@@ -110,6 +127,7 @@ class GameViewController: UIViewController {
 
     func shuffle() {
         let newCookies = level.shuffle()
+        scene.animateBeginGame() {}
         scene.addCookies(for: newCookies)
     }
     
@@ -155,17 +173,21 @@ class GameViewController: UIViewController {
             print("Game Over!!")
             let chains = level.removeAllCookies()
             scene.animateRemoveAllCookiesAtDie(for: chains) {
-                self.gameOverPanel.image = UIImage(named: "GameOver")
-                self.showGameOver()
+                self.scene.animateGameOver() {
+                    self.gameOverPanel.image = UIImage(named: "GameOver")
+                    self.showGameOver()
+                }
             }
         } else if scene.playerHP == maxHealth {
             print("Next Level Open!!")
             let chains = level.removeAllCookies()
             scene.animateRemoveAllCookiesAtFinish(for: chains) {
-                self.saveLevelClearInformation()
-                self.gameOverPanel.image = UIImage(named: "LevelComplete")
-                self.showGameOver()
-                self.currentLevel = self.currentLevel < maxLevels ? self.currentLevel + 1 : 1
+                self.scene.animateGameOver() {
+                    self.saveLevelClearInformation()
+                    self.gameOverPanel.image = UIImage(named: "LevelComplete")
+                    self.showGameOver()
+                    self.currentLevel = self.currentLevel < maxLevels ? self.currentLevel + 1 : 1
+                }
             }
         }
     }
@@ -191,43 +213,25 @@ class GameViewController: UIViewController {
     }
 
     func saveLevelClearInformation() {
-        
-        let request = NSFetchRequest<NSFetchRequestResult>(entityName: "LevelEntity")
-        request.fetchLimit = 1
-        request.predicate = NSPredicate(format: "level == %d", currentLevel)
-        request.returnsObjectsAsFaults = false
-        do {
-            let levels = try context.fetch(request)
-            print("Count", levels.count)
-            if levels.count == 1 {
-                print("Level Infornation Changed, Level: ", currentLevel)
-                let change: LevelEntity = levels.first as! LevelEntity
-                change.setValue(scene.score, forKey: "score")
-                change.setValue(scene.maxCombo, forKey: "combo")
-                change.setValue(scene.turn, forKey: "turn")
-                print("Level: ", change)
-            } else {
-                print("Level Infornation Append, Level: ", currentLevel)
-                let entity = NSEntityDescription.entity(forEntityName: "LevelEntity", in: context)
-                let new = NSManagedObject(entity: entity!, insertInto: context)
-                
-                new.setValue(currentLevel, forKey: "level")
-                new.setValue(scene.score, forKey: "score")
-                new.setValue(scene.maxCombo, forKey: "combo")
-                new.setValue(scene.turn, forKey: "turn")
-                print("Level: ", new)
-            }
-            
-        } catch {
-            print("Failed")
-        }
+        let accessData = AccessData()
+        accessData.saveLevel(level: currentLevel, score: scene.score, combo: scene.maxCombo, turn: scene.turn)
+    }
+    
+    func handleGameRoom() {
+        let view = self.view as! SKView
+        view.isMultipleTouchEnabled = false
 
-        do {
-            try context.save()
-        } catch {
-            print("Failed saving")
-        }
+        roomScene = GameRoomScene(size: view.bounds.size)
+        roomScene.scaleMode = .aspectFill
+        roomScene.returnHandler = handleReturnToGame
+        roomScene.changeLevelHandler = handleChangeLevel
+
+        view.presentScene(roomScene)
     }
 
-
+    func handleReturnToGame(_: Int) {
+        let view = self.view as! SKView
+        view.isMultipleTouchEnabled = false
+        view.presentScene(scene)
+    }
 }
