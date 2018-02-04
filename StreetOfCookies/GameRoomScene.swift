@@ -123,7 +123,6 @@ class GameRoomScene: SKScene {
         for lv in 0...maxPassLevel {
             if roomLabel[lv].contains(location) || roomButton[lv].contains(location) {
                 selectLevel = lv
-                print("Select Level", selectLevel)
                 roomButton[lv].actionFunc(lv)
             }
             roomButton[lv].activeButton.isHidden = true
@@ -148,7 +147,7 @@ class GameRoomScene: SKScene {
         var x: CGFloat = 0
         var y: CGFloat = 0
         var currentLevel = true
-        for lv in 0..<12 {
+        for lv in 0..<maxLevels {
             roomLabel.append(SKLabelNode(fontNamed: "Noteworthy-Bold"))
             roomLabel[lv].verticalAlignmentMode = .center
             roomLabel[lv].fontSize = tileHeight * 0.4
@@ -157,7 +156,6 @@ class GameRoomScene: SKScene {
             x = tileWidth * 2.4 * CGFloat(lv % 3 - 1)
             y = tileWidth * 2.4 * (CGFloat(lv / 3) - 1.5) * -1
             
-            print(lv, x, y, lv % 3, lv / 3)
             roomLabel[lv].position = CGPoint(x: x, y: y)
             roomLabel[lv].zPosition = 300
             

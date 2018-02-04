@@ -52,6 +52,7 @@ class GameViewController: UIViewController {
         view.addSubview(gameOverPanel)
         gameOverPanel.isHidden = true
 
+        currentLevel = getCurrentRoom()
         setupLevel(levelNum: currentLevel)
         backgroundMusic?.play()        
     }
@@ -84,7 +85,7 @@ class GameViewController: UIViewController {
         scene = GameScene(size: view.bounds.size)
         scene.scaleMode = .aspectFill
         
-        level = Level(filename: "Level_\(levelNum)")
+        level = Level(filename: String(format: "Level_%02d", levelNum))
         scene.level = level
         scene.addTiles()
         scene.swipeHandler = handleSwipe
@@ -105,8 +106,7 @@ class GameViewController: UIViewController {
         scene.scaleMode = .aspectFill
         
         //let levelNum = roomScene.selectLevel
-        print("Load Level", levelNum + 1)
-        level = Level(filename: "Level_\(levelNum + 1)")
+        level = Level(filename: String(format: "Level_%02d", levelNum))
         scene.level = level
         scene.addTiles()
         scene.swipeHandler = handleSwipe
@@ -114,7 +114,8 @@ class GameViewController: UIViewController {
         scene.gameRoomHandler = handleGameRoom
         gameOverPanel.isHidden = true
         scene.showLevel(levelNum)
-        
+
+        currentLevel = levelNum
         view.presentScene(scene)
         beginGame()
     }
@@ -170,7 +171,7 @@ class GameViewController: UIViewController {
         scene.moveTime = level.moveTime
 
         if scene.playerHP == 0 {
-            print("Game Over!!")
+            // Game Over!!
             let chains = level.removeAllCookies()
             scene.animateRemoveAllCookiesAtDie(for: chains) {
                 self.scene.animateGameOver() {
@@ -179,7 +180,7 @@ class GameViewController: UIViewController {
                 }
             }
         } else if scene.playerHP == maxHealth {
-            print("Next Level Open!!")
+            // Next Room Open!!
             let chains = level.removeAllCookies()
             scene.animateRemoveAllCookiesAtFinish(for: chains) {
                 self.scene.animateGameOver() {
@@ -210,6 +211,7 @@ class GameViewController: UIViewController {
         setupLevel(levelNum: currentLevel)
         
         print("Re-Start Game!!")
+        //need to add select room or restart this room?
     }
 
     func saveLevelClearInformation() {
@@ -234,4 +236,17 @@ class GameViewController: UIViewController {
         view.isMultipleTouchEnabled = false
         view.presentScene(scene)
     }
+    
+    func getCurrentRoom() -> Int {
+        let accessData = AccessData()
+        
+        for lv in 0..<maxLevels {
+            let (lvPass, _, _, _) = accessData.loadLevel(level: lv)
+            if lvPass == -1 {
+                return lv
+            }
+        }
+        return -1
+    }
+    
 }

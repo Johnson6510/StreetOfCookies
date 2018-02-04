@@ -10,10 +10,10 @@ import Foundation
 
 let maxX = 6
 let maxY = 8
-let maxLevels = 99
 let maxHealth: Int = 1000
 let maxTime: Double = 20.0
 let maxDice: Int = 6
+let maxLevels: Int = 50
 
 class Level {
     fileprivate var cookies = Array2D<Cookie>(x: maxX, y: maxY)

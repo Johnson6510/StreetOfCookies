@@ -19,22 +19,32 @@ class AccessData {
     }
 
     func saveLevel(level: Int, score: Int, combo: Int, turn: Int) {
+        print("Level", level, score, combo, turn)
+        
         let request = NSFetchRequest<NSFetchRequestResult>(entityName: "LevelEntity")
         request.fetchLimit = 1
         request.predicate = NSPredicate(format: "level == %d", level)
         request.returnsObjectsAsFaults = false
         do {
             let levels = try context.fetch(request)
-            print("Count", levels.count)
             if levels.count == 1 {
-                print("Level Infornation Changed, Level: ", level)
                 let change: LevelEntity = levels.first as! LevelEntity
-                change.setValue(score, forKey: "score")
-                change.setValue(combo, forKey: "combo")
-                change.setValue(turn, forKey: "turn")
-                print("Level: ", change)
+                
+                let orgScore = change.value(forKey: "score") as! Int
+                let orgCombo = change.value(forKey: "combo") as! Int
+                let orgTurn = change.value(forKey: "turn") as! Int
+                if score > orgScore {
+                    change.setValue(score, forKey: "score")
+                }
+                if combo > orgCombo {
+                    change.setValue(combo, forKey: "combo")
+                }
+                if turn > orgTurn {
+                    change.setValue(turn, forKey: "turn")
+                }
+                
+                print("Level Infornation Changed, Level: ", change)
             } else {
-                print("Level Infornation Append, Level: ", level)
                 let entity = NSEntityDescription.entity(forEntityName: "LevelEntity", in: context)
                 let new = NSManagedObject(entity: entity!, insertInto: context)
                 
@@ -42,7 +52,7 @@ class AccessData {
                 new.setValue(score, forKey: "score")
                 new.setValue(combo, forKey: "combo")
                 new.setValue(turn, forKey: "turn")
-                print("Level: ", new)
+                print("Level Infornation Append, Level: ", new)
             }
             
         } catch {
@@ -63,14 +73,12 @@ class AccessData {
         request.returnsObjectsAsFaults = false
         do {
             let levels = try context.fetch(request)
-            print("Count", levels.count)
             if levels.count == 1 {
-                print("Level Infornation Changed, Level: ", level)
                 let change: LevelEntity = levels.first as! LevelEntity
                 let score = change.value(forKey: "score")
                 let combo = change.value(forKey: "combo")
                 let turn = change.value(forKey: "turn")
-                print("Level: ", change)
+                print("Level Infornation Loaded, Level: ", change)
                 return (level, score as! Int, combo as! Int, turn as! Int)
             }
         } catch {

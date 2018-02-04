@@ -8,8 +8,8 @@
 
 // need to add:
 // icon & Luanch Screen
-// select level
-// turn animate [move vector up -> change turn -> move vector down]
+// add achievement for each room
+// into game, select laster room
 //
 
 import SpriteKit
@@ -45,6 +45,7 @@ class GameScene: SKScene {
     var totalEatCookies: Int = 0
 
     var score: Int = 0
+    var scoreAdd: Int = 0
     var scoreLabel: SKLabelNode? = nil
 
     var levelLabel: SKLabelNode!
@@ -110,8 +111,10 @@ class GameScene: SKScene {
 
         turn = 0
         score = 0
+        scoreAdd = 0
         maxCombo = 0
         healthBarHp = 0
+        animateTurn()
         
         //view -+- background
         //      +- gameLayer -+- tilesLayer -+- tileNode(x*y)
@@ -257,7 +260,7 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
-        animateTurn()
+        //animateTurn()
         animateScore()
         updateTimerBar(node: timerBar)
     }
@@ -410,7 +413,7 @@ class GameScene: SKScene {
             let addHp = (2 + combo) * totalEatCookies
             playerHP = min(maxHealth, playerHP + addHp)
             
-            score += 60 * (chain.cookies.count - 2)
+            scoreAdd += 60 * (chain.cookies.count - 2)
         }
         lastCombo += chains.count
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
@@ -552,12 +555,41 @@ class GameScene: SKScene {
         turnLabel?.zPosition = 300
         gameLayer.addChild(turnLabel!)
         
-        let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 3), duration: 0.7)
-        moveAction.timingMode = .easeOut
-        turnLabel?.run(moveAction)
+        var totalDuration: TimeInterval = 0
+        var duration: TimeInterval
+
+        duration = 0.5
+        totalDuration = totalDuration + duration
+        let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 10), duration: duration)
+        moveAction.timingMode = .linear
+        let scaleAction = SKAction.scale(by: 2.0, duration: duration)
+        scaleAction.timingMode = .linear
+        turnLabel?.run(SKAction.group([moveAction, scaleAction]))
+        
+        duration = 0.5
+        totalDuration = totalDuration + duration
+        turnLabel?.run(SKAction.group([SKAction.wait(forDuration: totalDuration), moveAction.reversed(), scaleAction.reversed()]))
     }
 
-    func animateScore() {        
+    func animateScore() {
+        if scoreAdd != 0 {
+            // scoreAdd flying from buttom, and scale to 0.5 into score
+            let scoreAddLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
+            scoreAddLabel.verticalAlignmentMode = .center
+            scoreAddLabel.fontSize = tileHeight * 0.4
+            scoreAddLabel.fontColor = UIColor(red: 0.1, green: 0.9, blue: 0.1, alpha:0.9)
+            scoreAddLabel.text = String(format: "+ %ld", scoreAdd)
+            scoreAddLabel.position = CGPoint(x: 0, y:  tileHeight * 4)
+            scoreAddLabel.zPosition = 350
+            gameLayer.addChild(scoreAddLabel)
+            
+            let moveAction = SKAction.move(by: CGVector(dx: 0, dy: tileHeight), duration: 0.6)
+            moveAction.timingMode = .easeOut
+            let scaleAction = SKAction.scale(by: 0.5, duration: 0.6)
+            scaleAction.timingMode = .easeOut
+            scoreAddLabel.run(SKAction.sequence([SKAction.group([moveAction, scaleAction]),SKAction.removeFromParent()]))
+        }
+
         if scoreLabel != nil {
             scoreLabel?.removeFromParent()
         }
@@ -565,6 +597,8 @@ class GameScene: SKScene {
         scoreLabel?.verticalAlignmentMode = .center
         scoreLabel?.fontSize = tileHeight * 0.4
         scoreLabel?.fontColor = UIColor(red: 0.0, green: 0.8, blue: 0.0, alpha:1)
+        score += scoreAdd
+        scoreAdd = 0
         scoreLabel?.text = String(format: "%ld", score)
         scoreLabel?.position = CGPoint(x: 0, y:  tileHeight * 5)
         scoreLabel?.zPosition = 300
@@ -587,7 +621,6 @@ class GameScene: SKScene {
     }
     
     func loadLevelSelect(_: Int) {
-        print("Load Level Select")
         if let handler = gameRoomHandler {
             handler()
             isMoved = false
