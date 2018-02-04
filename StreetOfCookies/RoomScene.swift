@@ -21,12 +21,18 @@ class RoomScene: SKScene {
     var roomLabel = [SKLabelNode]()
     var roomButton = [SKButton]()
 
+    var rightButton: SKButton!
+    var leftButton: SKButton!
+    var isRightBtnDisable: Bool = false
+    var isLeftBtnDisable: Bool = false
 
     var returnHandler: ((Int) -> ())?
     var changeLevelHandler: ((Int) -> ())?
     
     var maxPassLevel: Int = 0
     var selectLevel: Int = 0
+    
+    var currectPage: Int = 0
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder) is not used in this app")
@@ -56,18 +62,20 @@ class RoomScene: SKScene {
         roomLayer.addChild(returnLabel)
 
         let size = CGSize(width: tileWidth * 1.5, height: tileHeight * 0.5)
-        returnButton = SKButton(defaultImage: "Button", activeImage: "ButtonActive", size: size, action: returnToGame)        
+        returnButton = SKButton(defaultImage: "Button", activeImage: "ButtonActive", size: size, action: returnToGame)
         returnLabel.addChild(returnButton)
 
-        setupRoom()
+        currectPage = setupRoom()
+        setupArrow()
+        nextPage(page: currectPage)
         
         //view -+- background
-        //      +- roomLayer -+- RoomLayer -+- RoomNode(x*y)
+        //      +- roomLayer -+- RoomLayer -+- RoomNode(maxRoom)
         //                    |
         //                    +- returnLabel -+- returnButton
         //                    |
-        //                    +- last page (not finish yet)
-        //                    +- next page (not finish yet)
+        //                    +- rightButton
+        //                    +- leftButton
         //
 
     }
@@ -127,7 +135,6 @@ class RoomScene: SKScene {
             }
             roomButton[lv].activeButton.isHidden = true
         }
-
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -140,7 +147,7 @@ class RoomScene: SKScene {
     override func didEvaluateActions() {
     }
     
-    func setupRoom() {
+    func setupRoom() -> Int {
         let accessData = AccessData()
         
         let roomSize = CGSize(width: tileWidth * 1.5, height: tileHeight * 1.5)
@@ -153,8 +160,8 @@ class RoomScene: SKScene {
             roomLabel[lv].fontSize = tileHeight * 0.4
             roomLabel[lv].fontColor = SKColor.white
             
-            x = tileWidth * 2.0 * CGFloat(lv % 3 - 1)
-            y = tileWidth * 2.0 * (CGFloat(lv / 3) - 1.5) * -1
+            x = tileWidth * 2.0 * CGFloat(lv % 12 % 3 - 1)
+            y = tileWidth * 2.0 * (CGFloat(lv % 12 / 3) - 1.5) * -1
             
             roomLabel[lv].position = CGPoint(x: x, y: y)
             roomLabel[lv].zPosition = 300
@@ -173,11 +180,72 @@ class RoomScene: SKScene {
                 maxPassLevel = lv
                 currentLevel = false
             } else {
-                roomLabel[lv].text = "🔒"
+                roomLabel[lv].text = "🔒\(lv+1)"
                 roomButton[lv].isEnable = false
             }
+            roomLabel[lv].position = CGPoint(x: roomLabel[lv].position.x + 1000, y: roomLabel[lv].position.y)
         }
-
+        
+        return maxPassLevel / 12
+    }
+    
+    func setupArrow() {
+        let size = CGSize(width: tileWidth * 0.6, height: tileHeight * 1)
+        
+        rightButton = SKButton(defaultImage: "RightArrow", activeImage: "RightArrowActive", size: size, action: pagePlus)
+        rightButton.position = CGPoint(x: tileWidth * 3.3, y: tileHeight * 0)
+        rightButton.zPosition = 300
+        roomLayer.addChild(rightButton)
+        
+        leftButton = SKButton(defaultImage: "LeftArrow", activeImage: "LeftArrowActive", size: size, action: pageMinus)
+        leftButton.position = CGPoint(x: tileWidth * -3.3, y: tileHeight * 0)
+        leftButton.zPosition = 300
+        roomLayer.addChild(leftButton)
+    }
+    
+    func nextPage(page: Int) {
+        for lv in 0..<maxLevels {
+            if lv / 12 == page {
+                roomLabel[lv].position = CGPoint(x: roomLabel[lv].position.x - 1000, y: roomLabel[lv].position.y)
+            }
+        }
+        
+        if page == 0  {
+            leftButton.position = CGPoint(x: leftButton.position.x + 1000, y: leftButton.position.y)
+            isLeftBtnDisable = true
+        } else if page == maxLevels / 12 {
+            rightButton.position = CGPoint(x: rightButton.position.x + 1000, y: rightButton.position.y)
+            isRightBtnDisable = true
+        } else {
+            if isLeftBtnDisable {
+                leftButton.position = CGPoint(x: leftButton.position.x - 1000, y: leftButton.position.y)
+                isLeftBtnDisable = false
+            }
+            if isRightBtnDisable {
+                rightButton.position = CGPoint(x: rightButton.position.x - 1000, y: rightButton.position.y)
+                isRightBtnDisable = false
+            }
+        }
+    }
+    
+    func pagePlus(_: Int) {
+        for lv in 0..<maxLevels {
+            if lv / 12 == currectPage {
+                roomLabel[lv].position = CGPoint(x: roomLabel[lv].position.x + 1000, y: roomLabel[lv].position.y)
+            }
+        }
+        currectPage += 1
+        nextPage(page: currectPage)
+    }
+    
+    func pageMinus(_: Int) {
+        for lv in 0..<maxLevels {
+            if lv / 12 == currectPage {
+                roomLabel[lv].position = CGPoint(x: roomLabel[lv].position.x + 1000, y: roomLabel[lv].position.y)
+            }
+        }
+        currectPage -= 1
+        nextPage(page: currectPage)
     }
     
     func changeLevel(_ lv: Int) {
