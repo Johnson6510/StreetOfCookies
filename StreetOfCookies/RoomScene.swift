@@ -1,5 +1,5 @@
 //
-//  GameRoomScene.swift
+//  RoomScene.swift
 //  StreetOfCookies
 //
 //  Created by 黃健偉 on 2018/2/3.
@@ -8,12 +8,12 @@
 
 import SpriteKit
 
-class GameRoomScene: SKScene {
+class RoomScene: SKScene {
     
     var tileWidth: CGFloat = 32
     var tileHeight: CGFloat = 36
 
-    let gameRoomLayer = SKNode()
+    let roomLayer = SKNode()
 
     var returnLabel: SKLabelNode!
     var returnButton: SKButton!
@@ -44,7 +44,7 @@ class GameRoomScene: SKScene {
         background.size = size
         background.alpha = 0.5
         addChild(background)
-        addChild(gameRoomLayer)
+        addChild(roomLayer)
 
         returnLabel = SKLabelNode(fontNamed: "Noteworthy-Bold")
         returnLabel.verticalAlignmentMode = .center
@@ -53,7 +53,7 @@ class GameRoomScene: SKScene {
         returnLabel?.position = CGPoint(x: tileWidth * -2.2, y: tileHeight * 5)
         returnLabel?.zPosition = 300
         returnLabel?.text = String("Return")
-        gameRoomLayer.addChild(returnLabel)
+        roomLayer.addChild(returnLabel)
 
         let size = CGSize(width: tileWidth * 1.5, height: tileHeight * 0.5)
         returnButton = SKButton(defaultImage: "Button", activeImage: "ButtonActive", size: size, action: returnToGame)        
@@ -62,12 +62,12 @@ class GameRoomScene: SKScene {
         setupRoom()
         
         //view -+- background
-        //      +- gameRoomLayer -+- RoomLayer -+- RoomNode(x*y)
-        //                        |
-        //                        +- returnLabel -+- returnButton
-        //                        |
-        //                        +- last page (not finish yet)
-        //                        +- next page (not finish yet)
+        //      +- roomLayer -+- RoomLayer -+- RoomNode(x*y)
+        //                    |
+        //                    +- returnLabel -+- returnButton
+        //                    |
+        //                    +- last page (not finish yet)
+        //                    +- next page (not finish yet)
         //
 
     }
@@ -143,7 +143,7 @@ class GameRoomScene: SKScene {
     func setupRoom() {
         let accessData = AccessData()
         
-        let roomSize = CGSize(width: tileWidth * 2, height: tileHeight * 2)
+        let roomSize = CGSize(width: tileWidth * 1.5, height: tileHeight * 1.5)
         var x: CGFloat = 0
         var y: CGFloat = 0
         var currentLevel = true
@@ -153,14 +153,14 @@ class GameRoomScene: SKScene {
             roomLabel[lv].fontSize = tileHeight * 0.4
             roomLabel[lv].fontColor = SKColor.white
             
-            x = tileWidth * 2.4 * CGFloat(lv % 3 - 1)
-            y = tileWidth * 2.4 * (CGFloat(lv / 3) - 1.5) * -1
+            x = tileWidth * 2.0 * CGFloat(lv % 3 - 1)
+            y = tileWidth * 2.0 * (CGFloat(lv / 3) - 1.5) * -1
             
             roomLabel[lv].position = CGPoint(x: x, y: y)
             roomLabel[lv].zPosition = 300
             
             let (lvPass, _, _, _) = accessData.loadLevel(level: lv)
-            gameRoomLayer.addChild(roomLabel[lv])
+            roomLayer.addChild(roomLabel[lv])
             
             roomButton.append(SKButton(defaultImage: "IconWhite", activeImage: "IconActive", size: roomSize, action: changeLevel))
             roomLabel[lv].addChild(roomButton[lv])

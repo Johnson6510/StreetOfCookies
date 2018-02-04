@@ -16,7 +16,13 @@ enum CookieType: Int, CustomStringConvertible {
     case donut = 4
     case macaroon = 5
     case sugarCookie = 6
-    
+    case eclair = 7
+    case originalCookie = 8
+    case pie = 9
+    case popTart = 10
+    case starCookie = 11
+    case chocolateCookie = 12
+
     var cookieName: String {
         let cookieName = [
             "Croissant",
@@ -24,7 +30,13 @@ enum CookieType: Int, CustomStringConvertible {
             "Danish",
             "Donut",
             "Macaroon",
-            "SugarCookie"]
+            "SugarCookie",
+            "Eclair",
+            "OriginalCookie",
+            "Pie",
+            "PopTart",
+            "StarCookie",
+            "ChocolateCookie"]
         
         return cookieName[rawValue - 1]
     }

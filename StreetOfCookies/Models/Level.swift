@@ -12,7 +12,7 @@ let maxX = 6
 let maxY = 8
 let maxHealth: Int = 1000
 let maxTime: Double = 20.0
-let maxDice: Int = 6
+let maxDice: Int = 12
 let maxLevels: Int = 50
 
 class Level {
@@ -114,8 +114,14 @@ class Level {
             defectMap.append([CookieType]())
             nodeMap.append([Bool]())
             for y in 0..<maxY {
-                defectMap[x].append((cookies[x, y]?.cookieType)!)
-                nodeMap[x].append(false)
+                if cookies[x, y]?.cookieType != nil {
+                    defectMap[x].append((cookies[x, y]?.cookieType)!)
+                    nodeMap[x].append(false)
+                } else {
+                    defectMap[x].append(.unknown)
+                    nodeMap[x].append(false)
+                }
+
             }
         }
 

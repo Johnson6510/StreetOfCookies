@@ -5,11 +5,16 @@
 //  Created by 黃健偉 on 2018/1/26.
 //  Copyright © 2018年 黃健偉. All rights reserved.
 //
+//  tutorial
 //  https://www.raywenderlich.com/125311/make-game-like-candy-crush-spritekit-swift-part-1
 //  https://www.raywenderlich.com/132114/make-game-like-candy-crush-spritekit-swift-part-2
 //  https://www.raywenderlich.com/132117/make-game-like-candy-crush-spritekit-swift-part-3
 //  https://www.raywenderlich.com/125313/make-game-like-candy-crush-spritekit-swift-part-4
 //
+//  game art
+//  https://www.gameartguppy.com/
+//
+
 
 import UIKit
 import SpriteKit
@@ -18,7 +23,7 @@ import AVFoundation
 class GameViewController: UIViewController {
 
     var scene: GameScene!
-    var roomScene: GameRoomScene!
+    var roomScene: RoomScene!
     var level: Level!
     
     var currentLevel = 0
@@ -53,6 +58,7 @@ class GameViewController: UIViewController {
         gameOverPanel.isHidden = true
 
         currentLevel = getCurrentRoom()
+        //currentLevel = 99
         setupLevel(levelNum: currentLevel)
         backgroundMusic?.play()        
     }
@@ -90,7 +96,7 @@ class GameViewController: UIViewController {
         scene.addTiles()
         scene.swipeHandler = handleSwipe
         scene.moveDoneHandler = handleMoveDone
-        scene.gameRoomHandler = handleGameRoom
+        scene.roomHandler = handleRoom
         gameOverPanel.isHidden = true
         scene.showLevel(levelNum)
         
@@ -111,7 +117,7 @@ class GameViewController: UIViewController {
         scene.addTiles()
         scene.swipeHandler = handleSwipe
         scene.moveDoneHandler = handleMoveDone
-        scene.gameRoomHandler = handleGameRoom
+        scene.roomHandler = handleRoom
         gameOverPanel.isHidden = true
         scene.showLevel(levelNum)
 
@@ -219,11 +225,11 @@ class GameViewController: UIViewController {
         accessData.saveLevel(level: currentLevel, score: scene.score, combo: scene.maxCombo, turn: scene.turn)
     }
     
-    func handleGameRoom() {
+    func handleRoom() {
         let view = self.view as! SKView
         view.isMultipleTouchEnabled = false
 
-        roomScene = GameRoomScene(size: view.bounds.size)
+        roomScene = RoomScene(size: view.bounds.size)
         roomScene.scaleMode = .aspectFill
         roomScene.returnHandler = handleReturnToGame
         roomScene.changeLevelHandler = handleChangeLevel

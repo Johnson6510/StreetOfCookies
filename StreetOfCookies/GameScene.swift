@@ -9,7 +9,6 @@
 // need to add:
 // icon & Luanch Screen
 // add achievement for each room
-// into game, select laster room
 //
 
 import SpriteKit
@@ -62,7 +61,7 @@ class GameScene: SKScene {
     
     var swipeHandler: ((Swap) -> ())?
     var moveDoneHandler: (() -> ())?
-    var gameRoomHandler: (() -> ())?
+    var roomHandler: (() -> ())?
 
     // Pre-load sounds
     let scrapeSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false) //移動
@@ -139,15 +138,17 @@ class GameScene: SKScene {
         var location = touch.location(in: cookiesLayer)
         let (success, x, y) = convertPoint(location)
         if success {
-            if let cookie = level.cookieAt(x: x, y: y) {
-                showSelectionIndicator(for: cookie)
-                swipeFromX = x
-                swipeFromY = y
-                oriX = x
-                oriY = y
+            if level.tileAt(x: x, y: y) != nil {
+                if let cookie = level.cookieAt(x: x, y: y) {
+                    showSelectionIndicator(for: cookie)
+                    swipeFromX = x
+                    swipeFromY = y
+                    oriX = x
+                    oriY = y
+                }
             }
+            isMoved = false
         }
-        isMoved = false
         
         //for levelButton
         location = touch.location(in: gameLayer)
@@ -210,15 +211,20 @@ class GameScene: SKScene {
             }
 
             if horzDelta != 0 || vertDelta != 0 {
-                trySwap(horizontal: horzDelta, vertical: vertDelta)
-                swipeFromX = oriX
-                swipeFromY = oriY
-                if !isMoved {
-                    playerHP = max(0, playerHP - 100)
-                    turn += 1
-                    animateTurn()
+                if level.tileAt(x: oriX, y: oriY) != nil {
+                    trySwap(horizontal: horzDelta, vertical: vertDelta)
+                    swipeFromX = oriX
+                    swipeFromY = oriY
+                    if !isMoved {
+                        playerHP = max(0, playerHP - 100)
+                        turn += 1
+                        animateTurn()
+                    }
+                    isMoved = true
+                } else {
+                    oriX = swipeFromX!
+                    oriY = swipeFromY!
                 }
-                isMoved = true
             }
         }
         
@@ -236,18 +242,22 @@ class GameScene: SKScene {
             hideSelectionIndicator()
         }
         if swipeFromX != nil && swipeFromY != nil {
-            if let handler = moveDoneHandler {
-                handler()
-                isMoved = false
+            if level.tileAt(x: oriX, y: oriY) != nil {
+
+                if let handler = moveDoneHandler {
+                    handler()
+                    isMoved = false
+                }
+                swipeFromX = nil
+                swipeFromY = nil
             }
-            swipeFromX = nil
-            swipeFromY = nil
         }
         
-        guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
         
         //for levelButton
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: self)
+
         if levelLabel.contains(location) {
             levelButton.actionFunc(0)
         }
@@ -621,7 +631,7 @@ class GameScene: SKScene {
     }
     
     func loadLevelSelect(_: Int) {
-        if let handler = gameRoomHandler {
+        if let handler = roomHandler {
             handler()
             isMoved = false
         }
