@@ -176,7 +176,7 @@ class RoomScene: SKScene {
             if lvPass != -1 {
                 roomLabel[lv].text = String(lv+1)
             } else if currentLevel {
-                roomLabel[lv].text = String(format: "[%ld]", lv+1)
+                roomLabel[lv].text = String(format: "[ %ld ]", lv+1)
                 maxPassLevel = lv
                 currentLevel = false
             } else {
@@ -190,7 +190,7 @@ class RoomScene: SKScene {
     }
     
     func setupArrow() {
-        let size = CGSize(width: tileWidth * 0.6, height: tileHeight * 1)
+        let size = CGSize(width: tileWidth * 0.8, height: tileHeight * 1.2)
         
         rightButton = SKButton(defaultImage: "RightArrow", activeImage: "RightArrowActive", size: size, action: pagePlus)
         rightButton.position = CGPoint(x: tileWidth * 3.3, y: tileHeight * 0)

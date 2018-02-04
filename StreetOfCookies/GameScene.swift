@@ -23,7 +23,9 @@ class GameScene: SKScene {
     let gameLayer = SKNode()
     let cookiesLayer = SKNode()
     let tilesLayer = SKNode()
-    
+    let cropLayer = SKCropNode()
+    let maskLayer = SKNode()
+
     var moveTime: Double = 0
     let timerBar = SKSpriteNode()
     var timerBarHeight: CGFloat = 5
@@ -92,20 +94,26 @@ class GameScene: SKScene {
         addChild(gameLayer)
         
         let layerPosition = CGPoint(x: -tileWidth * CGFloat(maxX) / 2, y: -tileHeight * CGFloat(maxY) / 2)
-            
+
         tilesLayer.position = layerPosition
         gameLayer.addChild(tilesLayer)
 
-        cookiesLayer.position = layerPosition
-        gameLayer.addChild(cookiesLayer)
+        gameLayer.addChild(cropLayer)
+        
+        //// Disable Mask
+        //maskLayer.position = layerPosition
+        //cropLayer.maskNode = maskLayer
 
-        timerBarHeight = tileHeight * 0.14
-        timerBar.position = CGPoint(x: 0, y: tileHeight * 4.14)
+        cookiesLayer.position = layerPosition
+        cropLayer.addChild(cookiesLayer)
+
+        timerBarHeight = tileHeight * 0.12
+        timerBar.position = CGPoint(x: 0, y: tileHeight * 4.25)
         gameLayer.addChild(timerBar)
         timer = Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(advanceTimer), userInfo: nil, repeats: true)
 
-        healthBarHeight = tileHeight * 0.4
-        healthBar.position = CGPoint(x: 0, y: tileHeight * 4.4)
+        healthBarHeight = tileHeight * 0.38
+        healthBar.position = CGPoint(x: 0, y: tileHeight * 4.5)
         gameLayer.addChild(healthBar)
 
         turn = 0
@@ -118,7 +126,8 @@ class GameScene: SKScene {
         //view -+- background
         //      +- gameLayer -+- tilesLayer -+- tileNode(x*y)
         //                    |
-        //                    +- cookiesLayer -+- cookieNode(x*y)
+        //                    +- cropLayer -+- cookiesLayer -+- cookieNode(x*y)
+        //                    |             +- maskLayer -+- tileNode(x*y)
         //                    |
         //                    +- healthBar
         //                    +- timerBar
@@ -270,7 +279,6 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
-        //animateTurn()
         animateScore()
         updateTimerBar(node: timerBar)
     }
@@ -298,15 +306,44 @@ class GameScene: SKScene {
     
     func addTiles() {
         for y in 0..<maxY {
-            for x in 0..<maxX{
+            for x in 0..<maxX {
                 if level.tileAt(x: x, y: y) != nil {
-                    let tileNode = SKSpriteNode(imageNamed: "Tile")
+                    //let tileNode = SKSpriteNode(imageNamed: "Tile")
+                    let tileNode = SKSpriteNode(imageNamed: "MaskTile")
                     tileNode.size = CGSize(width: tileWidth, height: tileHeight)
                     tileNode.position = pointFor(x: x, y: y)
+                    //tilesLayer.addChild(tileNode)
+                    maskLayer.addChild(tileNode)
+                }
+            }
+        }
+        
+        for y in 0..<maxY+1 {
+            for x in 0..<maxX+1 {
+                let topLeft     = (x > 0)    && (y < maxY) && level.tileAt(x: x - 1, y: y    ) != nil
+                let bottomLeft  = (x > 0)    && (y > 0)    && level.tileAt(x: x - 1, y: y - 1) != nil
+                let topRight    = (x < maxX) && (y < maxY) && level.tileAt(x: x,     y: y    ) != nil
+                let bottomRight = (x < maxX) && (y > 0)    && level.tileAt(x: x,     y: y - 1) != nil
+                
+                // The tiles are named from 0 to 15, according to the bitmask that is
+                // made by combining these four values.
+                //from 0b0000 to 0b1111
+                let value = String(Int(bottomRight.hashValue)) + String(Int(bottomLeft.hashValue)) + String(Int(topRight.hashValue)) + String(Int(topLeft.hashValue))
+
+                // Values 0 (no tiles), 6 and 9 (two opposite tiles) are not drawn.
+                if value != "0000" && value != "0110" && value != "1001" {
+                    let name = "Tile_" + value
+                    let tileNode = SKSpriteNode(imageNamed: name)
+                    tileNode.size = CGSize(width: tileWidth, height: tileHeight)
+                    var point = pointFor(x: x, y: y)
+                    point.x -= tileWidth/2
+                    point.y -= tileHeight/2
+                    tileNode.position = point
                     tilesLayer.addChild(tileNode)
                 }
             }
         }
+
     }
 
     func addCookies(for cookies: Set<Cookie>) {
